@@ -1,3 +1,4 @@
 [submodule "nitro"]
 	path = nitro
 	url = https://github.com/OffchainLabs/nitro/
+	branch = v2.1.3
