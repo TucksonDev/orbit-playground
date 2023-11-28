@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint .",
+    "format": "prettier '{scripts,src}/**/*.{js,json,ts,yml}' --write && eslint --fix",
     "deployOrbitChain": "ts-node ./scripts/deployNewOrbitChain.ts",
     "buildNitro": "./shell-scripts/build-nitro.sh"
   },
