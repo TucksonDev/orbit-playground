@@ -24,10 +24,11 @@ if (
   !process.env.CHAIN_OWNER_PRIVATE_KEY ||
   !process.env.BATCH_POSTER_PRIVATE_KEY ||
   !process.env.STAKER_PRIVATE_KEY ||
-  !process.env.CHAIN_CONFIG_FOLDER
+  !process.env.CHAIN_CONFIG_FOLDER ||
+  !process.env.NODE_CONFIG_FILENAME
 ) {
   throw new Error(
-    'The following environment variables must be present: BASE_CHAIN_ID, CHAIN_OWNER_PRIVATE_KEY, BATC_POSTER_PRIVATE_KEY, STAKER_PRIVATE_KEY, CHAIN_CONFIG_FOLDER',
+    'The following environment variables must be present: BASE_CHAIN_ID, CHAIN_OWNER_PRIVATE_KEY, BATC_POSTER_PRIVATE_KEY, STAKER_PRIVATE_KEY, CHAIN_CONFIG_FOLDER, NODE_CONFIG_FILENAME',
   );
 }
 
@@ -130,7 +131,9 @@ const main = async () => {
     parentChainRpcUrl: getRpcUrl(chainInformation),
   });
 
-  const filePath = process.env.CHAIN_CONFIG_FOLDER + 'node-config.json';
+  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const nodeConfigFilename = (process.env.NODE_CONFIG_FILENAME || 'node-config') + '.json';
+  const filePath = configDir + '/' + nodeConfigFilename;
   writeFileSync(filePath, JSON.stringify(nodeConfig, null, 2));
   console.log(`Node config written to ${filePath}`);
 };
