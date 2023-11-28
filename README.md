@@ -34,6 +34,10 @@ Make a copy of the `.env.example` file and call it `.env`. Then, make sure you s
 
 ## TODO
 - Add the initialization script (copy and adapt from orbit-setup-script)
+- Add flow for customizing the STF:
+    - Script to generate the new image
+    - Script to obtain the WASM module root and update it on-chain
+    - Describe the flow on this file
 - Add support for AnyTrust chains
 - Allow running a chain without blockscout
 - Test with multiple Orbit chains
