@@ -16,13 +16,13 @@ This repository contains everything that's needed to start playing with Orbit ch
 
 ## Configure your chain
 
-Make a copy of the `.env.example` file and call it `.env`. Then, make sure you set a private key for the Chain owner, Batch poster and Staker accounts. You can leave the rest of options with their default, or personalize any of them.
+Make a copy of the `.env.example` file and call it `.env`. Then, make sure you set a private key for the Chain owner, Batch poster and Staker accounts. You can leave the rest of options with their default, or customize any of them.
 
 ## Deploy an Orbit chain
 
 1. Deploy the contracts
 
-    `yarn run deployOrbitChain`
+    `yarn run deployChain`
 
 2. Build your nitro node
 
@@ -32,12 +32,29 @@ Make a copy of the `.env.example` file and call it `.env`. Then, make sure you s
 
     `docker compose up`
 
+4. Initialize your chain
+
+    `yarn run initialize`
+
+5. (Optional) Deploy the Token Bridge
+
+    `yarn run deployTokenBridge`
+
+## Update the WASM module root of your node (WIP)
+
+When you modify the State Transition Function (STF) of your node, you have to update the WASM module root on-chain. You can find more information about what this means in the [Arbitrum documentation portal](https://docs.arbitrum.io/launch-orbit-chain/how-tos/customize-stf).
+
+Follow these steps to complete the process.
+
+1. Obtain the new WASM module root
+
+    `yarn run buildNitro`
+
+2. Update the WASM module root
+
+    `yarn run updateWASM <WASM module root>`
+
 ## TODO
-- Add the initialization script (copy and adapt from orbit-setup-script)
-- Add flow for customizing the STF:
-    - Script to generate the new image
-    - Script to obtain the WASM module root and update it on-chain
-    - Describe the flow on this file
 - Add support for AnyTrust chains
 - Allow running a chain without blockscout
 - Test with multiple Orbit chains

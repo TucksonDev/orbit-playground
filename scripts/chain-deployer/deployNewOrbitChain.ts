@@ -14,13 +14,13 @@ import {
   sanitizePrivateKey,
   withFallbackPrivateKey,
   getRpcUrl,
-} from '../src/utils';
-import { writeFileSync } from 'fs';
+  saveNodeConfigFile,
+} from '../../src/utils';
 import 'dotenv/config';
 
 // Check for required env variables
 if (
-  !process.env.BASE_CHAIN_ID ||
+  !process.env.PARENT_CHAIN_ID ||
   !process.env.CHAIN_OWNER_PRIVATE_KEY ||
   !process.env.BATCH_POSTER_PRIVATE_KEY ||
   !process.env.STAKER_PRIVATE_KEY ||
@@ -28,7 +28,7 @@ if (
   !process.env.NODE_CONFIG_FILENAME
 ) {
   throw new Error(
-    'The following environment variables must be present: BASE_CHAIN_ID, CHAIN_OWNER_PRIVATE_KEY, BATC_POSTER_PRIVATE_KEY, STAKER_PRIVATE_KEY, CHAIN_CONFIG_FOLDER, NODE_CONFIG_FILENAME',
+    'The following environment variables must be present: PARENT_CHAIN_ID, CHAIN_OWNER_PRIVATE_KEY, BATC_POSTER_PRIVATE_KEY, STAKER_PRIVATE_KEY, CHAIN_CONFIG_FOLDER, NODE_CONFIG_FILENAME',
   );
 }
 
@@ -41,7 +41,7 @@ const validatorPrivateKey = withFallbackPrivateKey(process.env.STAKER_PRIVATE_KE
 const validator = privateKeyToAccount(validatorPrivateKey).address;
 
 // Set the parent chain and create a public client for it
-const chainInformation = getChainConfigFromChainId(Number(process.env.BASE_CHAIN_ID));
+const chainInformation = getChainConfigFromChainId(Number(process.env.PARENT_CHAIN_ID));
 const parentChainPublicClient = createPublicClient({
   chain: chainInformation,
   transport: http(),
@@ -57,9 +57,7 @@ const main = async () => {
   console.log('');
 
   // Generate a random chain id
-  const orbitChainId = process.env.ORBIT_CHAIN_ID
-    ? Number(process.env.ORBIT_CHAIN_ID)
-    : generateChainId();
+  const orbitChainId = generateChainId();
 
   //
   // Create the chain config
@@ -131,10 +129,7 @@ const main = async () => {
     parentChainRpcUrl: getRpcUrl(chainInformation),
   });
 
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
-  const nodeConfigFilename = (process.env.NODE_CONFIG_FILENAME || 'node-config') + '.json';
-  const filePath = configDir + '/' + nodeConfigFilename;
-  writeFileSync(filePath, JSON.stringify(nodeConfig, null, 2));
+  const filePath = saveNodeConfigFile(nodeConfig);
   console.log(`Node config written to ${filePath}`);
 };
 

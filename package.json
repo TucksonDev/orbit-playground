@@ -6,8 +6,12 @@
   "scripts": {
     "lint": "eslint .",
     "format": "prettier '{scripts,src}/**/*.{js,json,ts,yml}' --write && eslint --fix",
-    "deployOrbitChain": "ts-node ./scripts/deployNewOrbitChain.ts",
-    "buildNitro": "./shell-scripts/build-nitro.sh"
+    "deployChain": "ts-node ./scripts/chain-deployer/deployNewOrbitChain.ts",
+    "buildNitro": "./shell-scripts/build-nitro-dev.sh",
+    "initialize": "ts-node ./scripts/chain-deployer/initializeOrbitChain.ts",
+    "deployTokenBridge": "ts-node ./scripts/chain-deployer/deployTokenBridge.ts",
+    "updateWASM": "ts-node ./scripts/updateWasmModuleRoot.ts",
+    "recoverFundsFromParentChain": "ts-node ./scripts/recoverFundsFromParentChain.ts"
   },
   "keywords": [],
   "author": "",

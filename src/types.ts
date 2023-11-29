@@ -21,6 +21,18 @@ export interface OrbitConfig {
   'nativeToken': string;
 }
 
+export interface OrbitChainInformation {
+  chainId: number;
+  chainName: string;
+  rpcUrl: string;
+  nativeToken: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  blockexplorerUrl: string;
+}
+
 export type OrbitDeploymentContracts = {
   rollupCreator: `0x${string}`;
   tokenBridgeCreator: `0x${string}`;

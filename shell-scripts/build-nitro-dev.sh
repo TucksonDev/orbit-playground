@@ -4,8 +4,6 @@
 ## Before executing this file make sure that:
 ##  1. You have docker installed ( Find instructions here: https://docs.arbitrum.io/node-running/how-tos/build-nitro-locally#step-1-configure-docker )
 ##  2. Your nitro submodule is up to date (you can run `git submodule update --init --recursive --force` to be sure)
-##
-## NOTE: This file exists only to provide an example of a non-dev nitro node
 ###############
 
 # Loading .env file
@@ -23,10 +21,14 @@ fi
 cd nitro
 
 # Building docker
-docker build . --tag $NITRO_DOCKER_IMAGE_TAG
+docker build . --target nitro-node-dev --tag $NITRO_DOCKER_IMAGE_TAG
+
+# Getting the WASM module root
+WASM_MODULE_ROOT="$(docker run --rm --entrypoint cat $NITRO_DOCKER_IMAGE_TAG target/machines/latest/module-root.txt)"
 
 # Going back to root
 cd ..
 
 # Confirmation
-echo "Nitro docker image has been created with tag $NITRO_DOCKER_IMAGE_TAG"
+echo "Nitro docker image (with target node-dev) has been created with tag $NITRO_DOCKER_IMAGE_TAG"
+echo "Current WASM module root is $WASM_MODULE_ROOT"
