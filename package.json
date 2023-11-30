@@ -11,6 +11,7 @@
     "initialize": "ts-node ./scripts/chain-deployer/initializeOrbitChain.ts",
     "deployTokenBridge": "ts-node ./scripts/chain-deployer/deployTokenBridge.ts",
     "updateWASM": "ts-node ./scripts/updateWasmModuleRoot.ts",
+    "updateNodeConfig": "ts-node ./scripts/updateNodeConfiguration.ts",
     "recoverFundsFromParentChain": "ts-node ./scripts/recoverFundsFromParentChain.ts"
   },
   "keywords": [],

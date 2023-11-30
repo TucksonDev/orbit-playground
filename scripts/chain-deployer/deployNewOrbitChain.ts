@@ -129,6 +129,11 @@ const main = async () => {
     parentChainRpcUrl: getRpcUrl(chainInformation),
   });
 
+  // Extra customizable options
+  if (process.env.NITRO_PORT) {
+    nodeConfig.http.port = Number(process.env.NITRO_PORT);
+  }
+
   const filePath = saveNodeConfigFile(nodeConfig);
   console.log(`Node config written to ${filePath}`);
 };

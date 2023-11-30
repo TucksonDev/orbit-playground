@@ -16,8 +16,8 @@ services:
         bin/blockscout start
     environment:
       ETHEREUM_JSONRPC_VARIANT: 'geth'
-      ETHEREUM_JSONRPC_HTTP_URL: http://nitro:8449/
-      ETHEREUM_JSONRPC_TRACE_URL: http://nitro:8449/
+      ETHEREUM_JSONRPC_HTTP_URL: http://nitro:${NITRO_PORT}/
+      ETHEREUM_JSONRPC_TRACE_URL: http://nitro:${NITRO_PORT}/
       INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER: "true"
       DATABASE_URL: postgresql://postgres:@postgres:5432/blockscout
       ECTO_USE_SSL: "false"
@@ -39,7 +39,7 @@ services:
   nitro:
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     ports:
-      - "127.0.0.1:8449:8449"
+      - "127.0.0.1:${NITRO_PORT}:${NITRO_PORT}"
     volumes:
       - "./${CHAIN_CONFIG_FOLDER}:/home/user/.arbitrum"
     command: --conf.file /home/user/.arbitrum/${NODE_CONFIG_FILENAME}.json

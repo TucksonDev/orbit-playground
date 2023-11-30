@@ -84,6 +84,18 @@ export const getContractsFromChainId = (chainId: number): OrbitDeploymentContrac
 //
 // Configuration helpers
 //
+export const getNodeConfigFileLocation = (): {
+  dir: string;
+  fileName: string;
+} => {
+  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const nodeConfigFilename = (process.env.NODE_CONFIG_FILENAME || 'node-config') + '.json';
+  return {
+    dir: configDir,
+    fileName: nodeConfigFilename,
+  };
+};
+
 export const saveNodeConfigFile = (nodeConfig: NodeConfig): string => {
   const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
   const nodeConfigFilename = (process.env.NODE_CONFIG_FILENAME || 'node-config') + '.json';
