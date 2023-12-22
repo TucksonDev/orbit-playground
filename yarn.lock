@@ -12,10 +12,10 @@
   resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.10.0.tgz#d2a39395c587e092d77cbbc80acf956a54f38bf7"
   integrity sha512-nA9XHtlAkYfJxY7bce8DcN7eKxWWCWkU+1GR9d+U6MbNpfwQp8TI7vqOsBsMcHoT4mBu2kypKoSKnghEzOOq5Q==
 
-"@arbitrum/orbit-sdk@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@arbitrum/orbit-sdk/-/orbit-sdk-0.4.1.tgz#97d4dd9028cb6ca142763b0f8b9100dd14bd0f8b"
-  integrity sha512-F1tv3SmYgpJPgifogxcnzdcrv9cYuv+R/OkPJKvCGvDv4PNNs6WhN4mZKVG1JoXSqhmIJZWYJ+wh/jTMOkfY8g==
+"@arbitrum/orbit-sdk@^0.5.4":
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/@arbitrum/orbit-sdk/-/orbit-sdk-0.5.4.tgz#b00f1c05ab8854a0227c65e5dbf0af1fd7c22c71"
+  integrity sha512-CiaaQz/uMZHPhHwNbw5njoZkcROIZ/JHv061DzeQARPSKKCt9MLq4UQrrD02zc1gSREHI1+xumUhxZ2MQc9BbQ==
 
 "@babel/runtime@^7.23.2":
   version "7.23.4"
@@ -2195,9 +2195,9 @@ v8-compile-cache-lib@^3.0.1:
   integrity sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==
 
 viem@^1.19.8:
-  version "1.19.9"
-  resolved "https://registry.yarnpkg.com/viem/-/viem-1.19.9.tgz#a11f3ad4a3323994ebd2010dbc659d1a2b12e583"
-  integrity sha512-Sf9U2x4jU0S/FALqYypcspWOGene0NZyD470oUripNhE0Ta6uOE/OgE4toTDVfRxov8qw0JFinr/wPGxYE3+HQ==
+  version "1.20.3"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-1.20.3.tgz#8b8360daee622295f5385949c02c86d943d14e0f"
+  integrity sha512-7CrmeCb2KYkeCgUmUyb1hsf+IX/PLwi+Np+Vm4YUTPeG82y3HRSgGHSaCOp3d0YtR2kXD3nv9y5kE7LBFE+wWw==
   dependencies:
     "@adraffy/ens-normalize" "1.10.0"
     "@noble/curves" "1.2.0"

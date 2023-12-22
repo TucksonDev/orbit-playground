@@ -6,7 +6,7 @@ This repository contains everything that's needed to start playing with Orbit ch
 
 1. Clone the repository
 
-    `git clone ...`
+    `git clone https://github.com/TucksonDev/orbit-playground.git`
 
 2. Install dependencies
 
@@ -54,7 +54,8 @@ Follow these steps to complete the process.
 
     `yarn run updateWASM <WASM module root>`
 
-## TODO
-- Add support for AnyTrust chains
-- Allow running a chain without blockscout
-- Test with multiple Orbit chains
+## Run your node without Blockscout
+
+To run your node without blockscout, simply specify the appropriate services in the docker compose command:
+
+`docker compose up nitro das-server`

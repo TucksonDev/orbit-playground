@@ -90,7 +90,6 @@ const main = async () => {
       config: orbitChainConfig,
       batchPoster,
       validators: [validator],
-      // deployFactoriesToL2: true,
     },
     account: chainOwner.address,
     publicClient: parentChainPublicClient,
@@ -126,7 +125,7 @@ const main = async () => {
     batchPosterPrivateKey: batchPosterPrivateKey,
     validatorPrivateKey: validatorPrivateKey,
     parentChainId: chainInformation.id,
-    parentChainRpcUrl: getRpcUrl(chainInformation),
+    parentChainRpcUrl: process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(chainInformation),
   });
 
   // Extra customizable options

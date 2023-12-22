@@ -77,6 +77,9 @@ const main = async () => {
       parentChainInformation,
     )}/tx/${fundBatchPosterTxHash}`,
   );
+  // NOTE: it looks like viem is not handling the nonce correctly when making calls this quickly.
+  // Adding a delay of 10 seconds solves this issue.
+  await delay(10 * 1000);
 
   console.log(`Fund staker account on parent chain with ${fundingAmount} ETH...`);
   const fundStakerTxHash = await parentChainWalletClient.sendTransaction({
@@ -88,6 +91,9 @@ const main = async () => {
       parentChainInformation,
     )}/tx/${fundStakerTxHash}`,
   );
+  // NOTE: it looks like viem is not handling the nonce correctly when making calls this quickly.
+  // Adding a delay of 10 seconds solves this issue.
+  await delay(10 * 1000);
 
   //
   // Funding the deployer account in the Orbit chain

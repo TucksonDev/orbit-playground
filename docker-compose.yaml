@@ -24,9 +24,9 @@ services:
       NETWORK: ""
       SUBNETWORK: "Arbitrum Local"
       BLOCKSCOUT_VERSION: "Arbitrum 0.0.1"
-      PORT: 4000
+      PORT: ${BLOCK_EXPLORER_PORT}
     ports:
-      - "127.0.0.1:4000:4000"
+      - "127.0.0.1:${BLOCK_EXPLORER_PORT}:${BLOCK_EXPLORER_PORT}"
 
   postgres:
     image: postgres:13.6

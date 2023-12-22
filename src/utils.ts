@@ -113,15 +113,23 @@ export const readNodeConfigFile = (): NodeConfig => {
 };
 
 export const getOrbitChainInformation = () => {
-  if (!process.env.ORBIT_CHAIN_RPC || !process.env.ORBIT_CHAIN_BLOCK_EXPLORER) {
+  if (
+    !process.env.NITRO_RPC_URL ||
+    !process.env.NITRO_PORT ||
+    !process.env.BLOCK_EXPLORER_URL ||
+    !process.env.BLOCK_EXPLORER_PORT
+  ) {
     throw new Error(
-      `Can't get orbitChainConfig without ORBIT_CHAIN_RPC and ORBIT_CHAIN_BLOCK_EXPLORER. Set these variables in the .env file.`,
+      `Can't get orbitChainConfig without NITRO_RPC_URL, NITRO_PORT, BLOCK_EXPLORER_URL and BLOCK_EXPLORER_PORT. Set these variables in the .env file.`,
     );
   }
 
   const nodeConfig = readNodeConfigFile();
   const orbitChainConfig = JSON.parse(nodeConfig.chain['info-json'])[0];
   const orbitChainId = Number(orbitChainConfig['chain-id']);
+
+  const orbitChainRpc = process.env.NITRO_RPC_URL + ':' + process.env.NITRO_PORT;
+  const blockExplorerUrl = process.env.BLOCK_EXPLORER_URL + ':' + process.env.BLOCK_EXPLORER_PORT;
 
   return defineChain({
     id: orbitChainId,
@@ -134,14 +142,14 @@ export const getOrbitChainInformation = () => {
     },
     rpcUrls: {
       default: {
-        http: [process.env.ORBIT_CHAIN_RPC],
+        http: [orbitChainRpc],
       },
       public: {
-        http: [process.env.ORBIT_CHAIN_RPC],
+        http: [orbitChainRpc],
       },
     },
     blockExplorers: {
-      default: { name: 'Blockscout', url: process.env.ORBIT_CHAIN_BLOCK_EXPLORER },
+      default: { name: 'Blockscout', url: blockExplorerUrl },
     },
   });
 };
