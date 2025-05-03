@@ -1,6 +1,6 @@
 import { Chain, defineChain } from 'viem';
 import { generatePrivateKey } from 'viem/accounts';
-import { arbitrum, arbitrumNova, arbitrumGoerli, arbitrumSepolia } from 'viem/chains';
+import { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia } from 'viem/chains';
 import { OrbitDeploymentContracts } from './types';
 import { orbitDeploymentContracts } from './contracts';
 import { readFileSync, writeFileSync } from 'fs';
@@ -8,7 +8,7 @@ import { NodeConfig } from '@arbitrum/orbit-sdk';
 import * as readline from 'readline';
 import 'dotenv/config';
 
-const supportedChains = { arbitrum, arbitrumNova, arbitrumGoerli, arbitrumSepolia };
+const supportedChains = { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia };
 
 //
 // Small helpers
@@ -125,7 +125,7 @@ export const getOrbitChainInformation = () => {
   }
 
   const nodeConfig = readNodeConfigFile();
-  const orbitChainConfig = JSON.parse(nodeConfig.chain['info-json'])[0];
+  const orbitChainConfig = JSON.parse(nodeConfig.chain!['info-json']!)[0];
   const orbitChainId = Number(orbitChainConfig['chain-id']);
 
   const orbitChainRpc = process.env.NITRO_RPC_URL + ':' + process.env.NITRO_PORT;
@@ -156,6 +156,10 @@ export const getOrbitChainInformation = () => {
 
 export const getOrbitChainConfiguration = () => {
   const nodeConfig = readNodeConfigFile();
-  const orbitChainConfig = JSON.parse(nodeConfig.chain['info-json'])[0];
+  const orbitChainConfig = JSON.parse(nodeConfig.chain!['info-json']!)[0];
   return orbitChainConfig;
+};
+
+export const chainIsL1 = (chain: Chain) => {
+  return chain.id == 1 || chain.id == 11155111;
 };

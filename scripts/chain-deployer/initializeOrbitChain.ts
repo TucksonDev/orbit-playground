@@ -1,5 +1,6 @@
 import { createPublicClient, createWalletClient, http, parseAbi, parseEther } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
+import { createRollupFetchCoreContracts } from '@arbitrum/orbit-sdk';
 import {
   getBlockExplorerUrl,
   getChainConfigFromChainId,
@@ -7,6 +8,7 @@ import {
   getOrbitChainInformation,
   delay,
   getOrbitChainConfiguration,
+  getRpcUrl,
 } from '../../src/utils';
 import 'dotenv/config';
 
@@ -39,11 +41,11 @@ const parentChainInformation = getChainConfigFromChainId(parentChainId);
 const parentChainWalletClient = createWalletClient({
   account: chainOwner,
   chain: parentChainInformation,
-  transport: http(),
+  transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation)),
 });
 const parentChainPublicClient = createPublicClient({
   chain: parentChainInformation,
-  transport: http(),
+  transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation)),
 });
 
 const orbitChainInformation = getOrbitChainInformation();
@@ -52,8 +54,7 @@ const orbitChainPublicClient = createPublicClient({
   transport: http(),
 });
 
-// Contract and amount constants
-const inboxAddress = orbitChainConfig.rollup.inbox;
+// Amount constants
 const fundingAmount = process.env.FUNDING_AMOUNT || '0.3';
 
 const main = async () => {
@@ -61,6 +62,15 @@ const main = async () => {
   console.log('* Orbit chain initializer *');
   console.log('***************************');
   console.log('');
+
+  //
+  // Getting the core contracts
+  //
+  const coreContracts = await createRollupFetchCoreContracts({
+    rollup: orbitChainConfig.rollup.rollup,
+    rollupDeploymentBlockNumber: BigInt(orbitChainConfig.rollup['deployed-at']),
+    publicClient: parentChainPublicClient,
+  });
 
   //
   // Funding the batch poster and staker accounts in the parent chain
@@ -104,7 +114,7 @@ const main = async () => {
   });
   const { request } = await parentChainPublicClient.simulateContract({
     account: chainOwner,
-    address: inboxAddress,
+    address: coreContracts.inbox,
     abi: parseAbi(['function depositEth() public payable']),
     functionName: 'depositEth',
     value: fundingAmountWei,

@@ -1,10 +1,9 @@
 import { createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
-  createRollupPrepareConfig,
+  createRollupPrepareDeploymentParamsConfig,
   prepareChainConfig,
-  createRollupPrepareTransactionRequest,
-  createRollupPrepareTransactionReceipt,
+  createRollup,
   prepareNodeConfig,
 } from '@arbitrum/orbit-sdk';
 import { generateChainId } from '@arbitrum/orbit-sdk/utils';
@@ -15,6 +14,7 @@ import {
   withFallbackPrivateKey,
   getRpcUrl,
   saveNodeConfigFile,
+  chainIsL1,
 } from '../../src/utils';
 import 'dotenv/config';
 
@@ -44,7 +44,7 @@ const validator = privateKeyToAccount(validatorPrivateKey).address;
 const chainInformation = getChainConfigFromChainId(Number(process.env.PARENT_CHAIN_ID));
 const parentChainPublicClient = createPublicClient({
   chain: chainInformation,
-  transport: http(),
+  transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(chainInformation)),
 });
 
 // Load the deployer account
@@ -70,7 +70,7 @@ const main = async () => {
   });
 
   // Prepare the transaction for deploying the core contracts
-  const orbitChainConfig = createRollupPrepareConfig({
+  const orbitChainConfig = createRollupPrepareDeploymentParamsConfig(parentChainPublicClient, {
     chainConfig,
     chainId: BigInt(orbitChainId),
     owner: chainOwner.address,
@@ -85,37 +85,27 @@ const main = async () => {
   //
   // Rollup contracts deployment
   //
-  const request = await createRollupPrepareTransactionRequest({
+  const transactionResult = await createRollup({
     params: {
       config: orbitChainConfig,
-      batchPoster,
+      batchPosters: [batchPoster],
       validators: [validator],
     },
-    account: chainOwner.address,
-    publicClient: parentChainPublicClient,
+    account: chainOwner,
+    parentChainPublicClient,
   });
-
-  // Sign and send the transaction
-  const txHash = await parentChainPublicClient.sendRawTransaction({
-    serializedTransaction: await chainOwner.signTransaction(request),
-  });
-
-  // Get the transaction receipt after waiting for the transaction to complete
-  const txReceipt = createRollupPrepareTransactionReceipt(
-    await parentChainPublicClient.waitForTransactionReceipt({ hash: txHash }),
-  );
 
   console.log(
     `Orbit chain was successfully deployed. Transaction hash: ${getBlockExplorerUrl(
       chainInformation,
-    )}/tx/${txReceipt.transactionHash}`,
+    )}/tx/${transactionResult.transactionReceipt.transactionHash}`,
   );
 
   //
   // Preparing the node configuration
   //
   // Get the core contracts from the transaction receipt
-  const coreContracts = txReceipt.getCoreContracts();
+  const coreContracts = transactionResult.transactionReceipt.getCoreContracts();
 
   // prepare the node config
   const nodeConfig = prepareNodeConfig({
@@ -126,11 +116,14 @@ const main = async () => {
     validatorPrivateKey: validatorPrivateKey,
     parentChainId: chainInformation.id,
     parentChainRpcUrl: process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(chainInformation),
+    parentChainBeaconRpcUrl: chainIsL1(chainInformation)
+      ? process.env.PARENT_CHAIN_BEACON_RPC_URL
+      : undefined,
   });
 
   // Extra customizable options
   if (process.env.NITRO_PORT) {
-    nodeConfig.http.port = Number(process.env.NITRO_PORT);
+    nodeConfig.http!.port = Number(process.env.NITRO_PORT);
   }
 
   const filePath = saveNodeConfigFile(nodeConfig);
