@@ -1,13 +1,21 @@
-import { createPublicClient, createWalletClient, http, parseAbi, parseEther } from 'viem';
+import { createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
   getBlockExplorerUrl,
   getChainConfigFromChainId,
   getOrbitChainConfiguration,
+  getOrbitChainInformation,
+  getRpcUrl,
   sanitizePrivateKey,
+  saveTokenBridgeContractsFile,
 } from '../../src/utils';
 import 'dotenv/config';
-import { orbitDeploymentContracts } from '../../src/contracts';
+import {
+  createTokenBridgePrepareSetWethGatewayTransactionReceipt,
+  createTokenBridgePrepareSetWethGatewayTransactionRequest,
+  createTokenBridgePrepareTransactionReceipt,
+  createTokenBridgePrepareTransactionRequest,
+} from '@arbitrum/orbit-sdk';
 
 // Check for required env variables
 if (!process.env.CHAIN_OWNER_PRIVATE_KEY) {
@@ -23,18 +31,17 @@ const chainOwner = privateKeyToAccount(sanitizePrivateKey(process.env.CHAIN_OWNE
 // Set the parent chain and create a wallet client for it
 const parentChainId = Number(orbitChainConfig['parent-chain-id']);
 const parentChainInformation = getChainConfigFromChainId(parentChainId);
-const parentChainWalletClient = createWalletClient({
-  account: chainOwner,
-  chain: parentChainInformation,
-  transport: http(),
-});
 const parentChainPublicClient = createPublicClient({
   chain: parentChainInformation,
-  transport: http(),
+  transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation)),
 });
 
-// Contract constants
-const inboxAddress = orbitChainConfig.rollup.inbox;
+// Set the orbit chain client
+const orbitChainInformation = getOrbitChainInformation();
+const orbitChainPublicClient = createPublicClient({
+  chain: orbitChainInformation,
+  transport: http(),
+});
 
 const main = async () => {
   console.log('*************************');
@@ -42,36 +49,122 @@ const main = async () => {
   console.log('*************************');
   console.log('');
 
-  // Because this will later be handled by the Orbit SDK (probably),
-  // we just hardcode the gas limit and callvalue here.
-  const maxGasForContracts = 31_000_000n;
-  const deploymentCallvalue = parseEther('0.005');
-
-  //
-  // Deploying the token bridge
-  //
-  console.log(`Deploy Token Bridge on parent chain...`);
-  const tokenBridgeCreatorAddress = orbitDeploymentContracts[parentChainId].tokenBridgeCreator;
-  const currentGasPrice = await parentChainPublicClient.getGasPrice();
-  const { request } = await parentChainPublicClient.simulateContract({
-    account: chainOwner,
-    address: tokenBridgeCreatorAddress,
-    abi: parseAbi(['function createTokenBridge(address,address,uint256,uint256) external payable']),
-    functionName: 'createTokenBridge',
-    args: [inboxAddress, chainOwner.address, maxGasForContracts, currentGasPrice],
-    value: deploymentCallvalue,
+  const txRequest = await createTokenBridgePrepareTransactionRequest({
+    params: {
+      rollup: orbitChainConfig.rollup.rollup,
+      rollupOwner: chainOwner.address,
+    },
+    parentChainPublicClient,
+    orbitChainPublicClient,
+    account: chainOwner.address,
+    retryableGasOverrides: {
+      maxSubmissionCostForFactory: { percentIncrease: 100n },
+      maxGasForFactory: { percentIncrease: 100n },
+      maxSubmissionCostForContracts: { percentIncrease: 100n },
+      maxGasForContracts: { percentIncrease: 100n },
+    },
   });
-  const tokenBridgeDeploymentTxHash = await parentChainWalletClient.writeContract(request);
+
+  // sign and send the transaction
+  console.log(`Deploying the TokenBridge...`);
+  const txHash = await parentChainPublicClient.sendRawTransaction({
+    serializedTransaction: await chainOwner.signTransaction(txRequest),
+  });
+
+  // get the transaction receipt after waiting for the transaction to complete
+  const txReceipt = createTokenBridgePrepareTransactionReceipt(
+    await parentChainPublicClient.waitForTransactionReceipt({ hash: txHash }),
+  );
   console.log(
-    `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
-      parentChainInformation,
-    )}/tx/${tokenBridgeDeploymentTxHash}`,
+    `Deployed in ${getBlockExplorerUrl(parentChainInformation)}/tx/${txReceipt.transactionHash}`,
   );
 
-  // Same here. This will probably be handled by the Orbit SDK later, so we just exit with a message.
+  // wait for retryables to execute
+  console.log(`Waiting for retryable tickets to execute on the Orbit chain...`);
+  const orbitChainRetryableReceipts = await txReceipt.waitForRetryables({
+    orbitPublicClient: orbitChainPublicClient,
+  });
+  console.log(`Retryables executed`);
   console.log(
-    `Token Bridge retryable transactions has been sent to the Orbit chain. It is recommended to wait a few minutes until they are executed.`,
+    `Transaction hash for first retryable is ${orbitChainRetryableReceipts[0].transactionHash}`,
   );
+  console.log(
+    `Transaction hash for second retryable is ${orbitChainRetryableReceipts[1].transactionHash}`,
+  );
+  if (orbitChainRetryableReceipts[0].status !== 'success') {
+    throw new Error(
+      `First retryable status is not success: ${orbitChainRetryableReceipts[0].status}. Aborting...`,
+    );
+  }
+  if (orbitChainRetryableReceipts[1].status !== 'success') {
+    throw new Error(
+      `Second retryable status is not success: ${orbitChainRetryableReceipts[1].status}. Aborting...`,
+    );
+  }
+
+  // fetching the TokenBridge contracts
+  const tokenBridgeContracts = await txReceipt.getTokenBridgeContracts({
+    parentChainPublicClient,
+  });
+  console.log(`TokenBridge contracts:`, tokenBridgeContracts);
+
+  // Save token bridge contracts in JSON file
+  const tokenBridgeContractsFilePath = saveTokenBridgeContractsFile(tokenBridgeContracts);
+  console.log(`TokenBridge contracts written to ${tokenBridgeContractsFilePath}`);
+
+  // verifying L2 contract existence
+  const orbitChainRouterBytecode = await orbitChainPublicClient.getBytecode({
+    address: tokenBridgeContracts.orbitChainContracts.router,
+  });
+
+  if (!orbitChainRouterBytecode || orbitChainRouterBytecode == '0x') {
+    throw new Error(
+      `TokenBridge deployment seems to have failed since orbit chain contracts do not have code`,
+    );
+  }
+
+  // set weth gateway
+  const setWethGatewayTxRequest = await createTokenBridgePrepareSetWethGatewayTransactionRequest({
+    rollup: orbitChainConfig.rollup.rollup,
+    parentChainPublicClient,
+    orbitChainPublicClient,
+    account: chainOwner.address,
+    retryableGasOverrides: {
+      gasLimit: {
+        percentIncrease: 200n,
+      },
+    },
+  });
+
+  // sign and send the transaction
+  const setWethGatewayTxHash = await parentChainPublicClient.sendRawTransaction({
+    serializedTransaction: await chainOwner.signTransaction(setWethGatewayTxRequest),
+  });
+
+  // get the transaction receipt after waiting for the transaction to complete
+  const setWethGatewayTxReceipt = createTokenBridgePrepareSetWethGatewayTransactionReceipt(
+    await parentChainPublicClient.waitForTransactionReceipt({ hash: setWethGatewayTxHash }),
+  );
+
+  console.log(
+    `Weth gateway set in ${getBlockExplorerUrl(parentChainInformation)}/tx/${
+      setWethGatewayTxReceipt.transactionHash
+    }`,
+  );
+
+  // Wait for retryables to execute
+  const orbitChainSetWethGatewayRetryableReceipt = await setWethGatewayTxReceipt.waitForRetryables({
+    orbitPublicClient: orbitChainPublicClient,
+  });
+  console.log(`Retryables executed`);
+  console.log(
+    `Transaction hash for retryable is ${orbitChainSetWethGatewayRetryableReceipt[0].transactionHash}`,
+  );
+  if (orbitChainSetWethGatewayRetryableReceipt[0].status !== 'success') {
+    throw new Error(
+      `Retryable status is not success: ${orbitChainSetWethGatewayRetryableReceipt[0].status}. Aborting...`,
+    );
+  }
 };
 
 // Calling main

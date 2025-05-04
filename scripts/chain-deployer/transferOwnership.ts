@@ -1,39 +1,23 @@
 import { createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import {
-  createTokenBridgeFetchTokenBridgeContracts,
-  arbOwnerPublicActions,
-} from '@arbitrum/orbit-sdk';
+import { arbOwnerPublicActions } from '@arbitrum/orbit-sdk';
 import {
   getBlockExplorerUrl,
-  getChainConfigFromChainId,
   sanitizePrivateKey,
   getOrbitChainInformation,
-  getOrbitChainConfiguration,
+  readTokenBridgeContractsFile,
 } from '../../src/utils';
 import 'dotenv/config';
 
 // Check for required env variables
-if (!process.env.CHAIN_OWNER_PRIVATE_KEY || !process.env.UPGRADE_EXECUTOR) {
-  throw new Error(
-    'The following environment variables must be present: CHAIN_OWNER_PRIVATE_KEY, UPGRADE_EXECUTOR',
-  );
+if (!process.env.CHAIN_OWNER_PRIVATE_KEY) {
+  throw new Error('The following environment variables must be present: CHAIN_OWNER_PRIVATE_KEY');
 }
-
-// Get Orbit configuration
-const orbitChainConfig = getOrbitChainConfiguration();
 
 // Load accounts
 const chainOwner = privateKeyToAccount(sanitizePrivateKey(process.env.CHAIN_OWNER_PRIVATE_KEY));
 
-// Set the parent chain and create a wallet client for it
-const parentChainId = Number(orbitChainConfig['parent-chain-id']);
-const parentChainInformation = getChainConfigFromChainId(parentChainId);
-const parentChainPublicClient = createPublicClient({
-  chain: parentChainInformation,
-  transport: http(),
-});
-
+// Set the orbit chain and create a public client for it
 const orbitChainInformation = getOrbitChainInformation();
 const orbitChainPublicClient = createPublicClient({
   chain: orbitChainInformation,
@@ -41,18 +25,15 @@ const orbitChainPublicClient = createPublicClient({
 }).extend(arbOwnerPublicActions);
 
 const main = async () => {
-  console.log('***************************');
-  console.log('* Orbit chain initializer *');
-  console.log('***************************');
+  console.log('*******************************************************');
+  console.log('* Orbit chain - Transfer ownership to UpgradeExecutor *');
+  console.log('*******************************************************');
   console.log('');
 
   //
   // Getting the core contracts
   //
-  const tokenBridgeContracts = await createTokenBridgeFetchTokenBridgeContracts({
-    inbox: orbitChainConfig.rollup.inbox,
-    parentChainPublicClient,
-  });
+  const tokenBridgeContracts = readTokenBridgeContractsFile();
 
   //
   // Transfering the ownership of the chain

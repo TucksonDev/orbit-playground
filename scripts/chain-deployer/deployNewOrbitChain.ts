@@ -5,6 +5,7 @@ import {
   prepareChainConfig,
   createRollup,
   prepareNodeConfig,
+  PrepareNodeConfigParams,
 } from '@arbitrum/orbit-sdk';
 import { generateChainId } from '@arbitrum/orbit-sdk/utils';
 import {
@@ -15,6 +16,7 @@ import {
   getRpcUrl,
   saveNodeConfigFile,
   chainIsL1,
+  saveCoreContractsFile,
 } from '../../src/utils';
 import 'dotenv/config';
 
@@ -41,10 +43,10 @@ const validatorPrivateKey = withFallbackPrivateKey(process.env.STAKER_PRIVATE_KE
 const validator = privateKeyToAccount(validatorPrivateKey).address;
 
 // Set the parent chain and create a public client for it
-const chainInformation = getChainConfigFromChainId(Number(process.env.PARENT_CHAIN_ID));
+const parentChainInformation = getChainConfigFromChainId(Number(process.env.PARENT_CHAIN_ID));
 const parentChainPublicClient = createPublicClient({
-  chain: chainInformation,
-  transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(chainInformation)),
+  chain: parentChainInformation,
+  transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation)),
 });
 
 // Load the deployer account
@@ -97,29 +99,51 @@ const main = async () => {
 
   console.log(
     `Orbit chain was successfully deployed. Transaction hash: ${getBlockExplorerUrl(
-      chainInformation,
+      parentChainInformation,
     )}/tx/${transactionResult.transactionReceipt.transactionHash}`,
   );
+
+  // Get the core contracts from the transaction receipt
+  const coreContracts = transactionResult.transactionReceipt.getCoreContracts();
+
+  // Save core contracts in JSON file
+  const coreContractsFilePath = saveCoreContractsFile(coreContracts);
+  console.log(`Core contracts written to ${coreContractsFilePath}`);
 
   //
   // Preparing the node configuration
   //
-  // Get the core contracts from the transaction receipt
-  const coreContracts = transactionResult.transactionReceipt.getCoreContracts();
-
-  // prepare the node config
-  const nodeConfig = prepareNodeConfig({
+  const nodeConfigParameters: PrepareNodeConfigParams = {
     chainName: process.env.ORBIT_CHAIN_NAME || 'My Orbit chain',
     chainConfig,
     coreContracts,
     batchPosterPrivateKey: batchPosterPrivateKey,
     validatorPrivateKey: validatorPrivateKey,
-    parentChainId: chainInformation.id,
-    parentChainRpcUrl: process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(chainInformation),
-    parentChainBeaconRpcUrl: chainIsL1(chainInformation)
+    parentChainId: parentChainInformation.id,
+    parentChainRpcUrl: process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation),
+    parentChainBeaconRpcUrl: chainIsL1(parentChainInformation)
       ? process.env.PARENT_CHAIN_BEACON_RPC_URL
       : undefined,
-  });
+  };
+  const nodeConfig = prepareNodeConfig(nodeConfigParameters);
+
+  if (process.env.DISABLE_L1_FINALITY) {
+    nodeConfig.node!['delayed-sequencer']!['require-full-finality'] = false;
+    nodeConfig.node!['batch-poster']!['max-delay'] = '5m';
+    nodeConfig.node!['batch-poster']!['data-poster'] = {
+      'wait-for-l1-finality': false,
+    };
+    nodeConfig.node!['staker']!['make-assertion-interval'] = '5m';
+    nodeConfig.node!['staker']!['data-poster'] = {
+      'wait-for-l1-finality': false,
+    };
+    nodeConfig.node!['parent-chain-reader'] = {
+      'use-finality-data': false,
+    };
+    nodeConfig.execution!['parent-chain-reader'] = {
+      'use-finality-data': false,
+    };
+  }
 
   // Extra customizable options
   if (process.env.NITRO_PORT) {

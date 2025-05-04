@@ -1,3 +1,5 @@
+import { Address } from 'viem';
+
 export interface OrbitConfig {
   'chainOwner': string;
   'rollup': string;
@@ -34,10 +36,36 @@ export interface OrbitChainInformation {
 }
 
 export type OrbitDeploymentContracts = {
-  rollupCreator: `0x${string}`;
-  tokenBridgeCreator: `0x${string}`;
+  rollupCreator: Address;
+  tokenBridgeCreator: Address;
 };
 
 export type OrbitDeploymentContractsMap = {
   [key: number]: OrbitDeploymentContracts;
+};
+
+type TokenBridgeParentChainContracts = {
+  router: Address;
+  standardGateway: Address;
+  customGateway: Address;
+  wethGateway: Address;
+  weth: Address;
+  multicall: Address;
+};
+
+type TokenBridgeOrbitChainContracts = {
+  router: Address;
+  standardGateway: Address;
+  customGateway: Address;
+  wethGateway: Address;
+  weth: Address;
+  proxyAdmin: Address;
+  beaconProxyFactory: Address;
+  upgradeExecutor: Address;
+  multicall: Address;
+};
+
+export type TokenBridgeContracts = {
+  parentChainContracts: TokenBridgeParentChainContracts;
+  orbitChainContracts: TokenBridgeOrbitChainContracts;
 };

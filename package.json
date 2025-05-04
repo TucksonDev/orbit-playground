@@ -10,6 +10,7 @@
     "buildNitro": "./shell-scripts/build-nitro-dev.sh",
     "initialize": "ts-node ./scripts/chain-deployer/initializeOrbitChain.ts",
     "deployTokenBridge": "ts-node ./scripts/chain-deployer/deployTokenBridge.ts",
+    "transferOwnership": "ts-node ./scripts/chain-deployer/transferOwnership.ts",
     "updateWASM": "ts-node ./scripts/updateWasmModuleRoot.ts",
     "updateNodeConfig": "ts-node ./scripts/updateNodeConfiguration.ts",
     "recoverFundsFromParentChain": "ts-node ./scripts/recoverFundsFromParentChain.ts",

@@ -1,10 +1,10 @@
 import { Chain, defineChain } from 'viem';
 import { generatePrivateKey } from 'viem/accounts';
 import { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia } from 'viem/chains';
-import { OrbitDeploymentContracts } from './types';
+import { OrbitDeploymentContracts, TokenBridgeContracts } from './types';
 import { orbitDeploymentContracts } from './contracts';
 import { readFileSync, writeFileSync } from 'fs';
-import { NodeConfig } from '@arbitrum/orbit-sdk';
+import { CoreContracts, NodeConfig } from '@arbitrum/orbit-sdk';
 import * as readline from 'readline';
 import 'dotenv/config';
 
@@ -109,6 +109,41 @@ export const readNodeConfigFile = (): NodeConfig => {
   const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
   const nodeConfigFilename = (process.env.NODE_CONFIG_FILENAME || 'node-config') + '.json';
   const filePath = configDir + '/' + nodeConfigFilename;
+  return JSON.parse(readFileSync(filePath, 'utf8'));
+};
+
+export const saveCoreContractsFile = (coreContracts: CoreContracts): string => {
+  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const coreContractsFilename = 'core-contracts.json';
+  const filePath = configDir + '/' + coreContractsFilename;
+  writeFileSync(filePath, JSON.stringify(coreContracts, null, 2));
+
+  return filePath;
+};
+
+export const readCoreContractsFile = (): CoreContracts => {
+  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const coreContractsFilename = 'core-contracts.json';
+  const filePath = configDir + '/' + coreContractsFilename;
+  return JSON.parse(readFileSync(filePath, 'utf8'));
+};
+
+// TODO: once TokenBridgeContracts is exported in the Orbit SDK, change the type of the parameter received
+export const saveTokenBridgeContractsFile = (
+  tokenBridgeContracts: TokenBridgeContracts,
+): string => {
+  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const tokenBridgeContractsFilename = 'token-bridge-contracts.json';
+  const filePath = configDir + '/' + tokenBridgeContractsFilename;
+  writeFileSync(filePath, JSON.stringify(tokenBridgeContracts, null, 2));
+
+  return filePath;
+};
+
+export const readTokenBridgeContractsFile = (): TokenBridgeContracts => {
+  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const tokenBridgeContractsFilename = 'token-bridge-contracts.json';
+  const filePath = configDir + '/' + tokenBridgeContractsFilename;
   return JSON.parse(readFileSync(filePath, 'utf8'));
 };
 
