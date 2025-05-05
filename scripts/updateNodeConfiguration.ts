@@ -3,9 +3,23 @@ import {
   readNodeConfigFile,
   getNodeConfigFileLocation,
   saveNodeConfigFile,
+  deepMerge,
 } from '../src/utils';
 import { copyFileSync } from 'fs';
 import 'dotenv/config';
+
+/////////////////
+// Node configuration updates
+// --------------------------
+// Add here whatever parameters you want to add/update from the configuration
+/////////////////
+const updatedNodeConfig = {
+  execution: {
+    caching: {
+      archive: true,
+    },
+  },
+};
 
 const main = async () => {
   console.log('*****************************');
@@ -41,16 +55,13 @@ const main = async () => {
 
   //
   // Updating the current configuration
-  //  (For now, only the NITRO_PORT, but other fields can also be adjusted later)
   //
-  if (process.env.NITRO_PORT) {
-    nodeConfig.http.port = Number(process.env.NITRO_PORT);
-  }
+  const newNodeConfig = deepMerge(nodeConfig, updatedNodeConfig);
 
   //
   // Saving the updated configuration
   //
-  const filePath = saveNodeConfigFile(nodeConfig);
+  const filePath = saveNodeConfigFile(newNodeConfig);
   console.log(
     `Node config has been updated in ${filePath}, and a backup of the previous file has been created at ${backupNodeConfigFilePath}`,
   );

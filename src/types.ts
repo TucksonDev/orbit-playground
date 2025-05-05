@@ -44,6 +44,10 @@ export type OrbitDeploymentContractsMap = {
   [key: number]: OrbitDeploymentContracts;
 };
 
+/*
+  Temporary type definitions
+  (This are likely to be exposed or added on the Orbit SDK in the future)
+*/
 type TokenBridgeParentChainContracts = {
   router: Address;
   standardGateway: Address;
@@ -68,4 +72,26 @@ type TokenBridgeOrbitChainContracts = {
 export type TokenBridgeContracts = {
   parentChainContracts: TokenBridgeParentChainContracts;
   orbitChainContracts: TokenBridgeOrbitChainContracts;
+};
+
+export type DasNodeConfig = {
+  'data-availability': {
+    'parent-chain-node-url': string;
+    'sequencer-inbox-address': string;
+    'key': {
+      'key-dir': string;
+    };
+    'local-cache': {
+      enable: boolean;
+    };
+    'local-file-storage'?: {
+      'enable'?: boolean;
+      'data-dir'?: string;
+    };
+  };
+  'enable-rpc'?: boolean;
+  'rpc-addr'?: string;
+  'enable-rest'?: boolean;
+  'rest-addr'?: string;
+  'log-level'?: string;
 };

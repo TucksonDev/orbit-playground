@@ -14,7 +14,7 @@
     "updateWASM": "ts-node ./scripts/updateWasmModuleRoot.ts",
     "updateNodeConfig": "ts-node ./scripts/updateNodeConfiguration.ts",
     "recoverFundsFromParentChain": "ts-node ./scripts/recoverFundsFromParentChain.ts",
-    "clean": "find chainConfig -mindepth 1 ! -name '.gitignore' -delete"
+    "clean": "find chainConfig -mindepth 1 ! -name '.gitignore' ! -name 'keys' ! -name 'das_bls*' -delete && find chainDasData -mindepth 1 ! -name '.gitignore' -delete"
   },
   "keywords": [],
   "author": "",

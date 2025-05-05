@@ -10,10 +10,11 @@ services:
 
   das-server:
     image: "${NITRO_DOCKER_IMAGE_TAG}"
-    entrypoint: [ "/bin/bash", "/das-server.sh" ]
+    entrypoint: [ "/bin/bash", "-c", "/das-server.sh ${USE_ANYTRUST}" ]
     volumes:
       - "./${CHAIN_CONFIG_FOLDER}:/home/user/.arbitrum"
       - "./shell-scripts/das-server.sh:/das-server.sh"
+      - "./${DAS_LOCAL_STORAGE}:/home/user/das-data"
     ports:
       - "9876:9876"
       - "9877:9877"

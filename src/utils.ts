@@ -1,7 +1,7 @@
-import { Chain, defineChain } from 'viem';
+import { Address, Chain, defineChain } from 'viem';
 import { generatePrivateKey } from 'viem/accounts';
 import { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia } from 'viem/chains';
-import { OrbitDeploymentContracts, TokenBridgeContracts } from './types';
+import { DasNodeConfig, OrbitDeploymentContracts, TokenBridgeContracts } from './types';
 import { orbitDeploymentContracts } from './contracts';
 import { readFileSync, writeFileSync } from 'fs';
 import { CoreContracts, NodeConfig } from '@arbitrum/orbit-sdk';
@@ -29,6 +29,20 @@ export const promptQuestion = (question: string): Promise<string> => {
       rl.close();
     });
   });
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const deepMerge = (target: any, source: any): any => {
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      if (!target[key]) target[key] = {};
+      target[key] = deepMerge(target[key], source[key]);
+    } else {
+      target[key] = source[key];
+    }
+  }
+
+  return target;
 };
 
 //
@@ -82,7 +96,7 @@ export const getContractsFromChainId = (chainId: number): OrbitDeploymentContrac
 };
 
 //
-// Configuration helpers
+// Node configuration helpers
 //
 export const getNodeConfigFileLocation = (): {
   dir: string;
@@ -112,6 +126,47 @@ export const readNodeConfigFile = (): NodeConfig => {
   return JSON.parse(readFileSync(filePath, 'utf8'));
 };
 
+export const prepareDasConfig = (
+  parentChainRpc: string,
+  sequencerInboxAddress: Address,
+): DasNodeConfig => {
+  const dasNodeConfig: DasNodeConfig = {
+    'data-availability': {
+      'parent-chain-node-url': parentChainRpc,
+      'sequencer-inbox-address': sequencerInboxAddress,
+      'key': {
+        'key-dir': '/home/user/.arbitrum/keys',
+      },
+      'local-cache': {
+        enable: true,
+      },
+      'local-file-storage': {
+        'enable': true,
+        'data-dir': '/home/user/das-data',
+      },
+    },
+    'enable-rpc': true,
+    'rpc-addr': '0.0.0.0',
+    'enable-rest': true,
+    'rest-addr': '0.0.0.0',
+    'log-level': 'INFO',
+  };
+
+  return dasNodeConfig;
+};
+
+export const saveDasNodeConfigFile = (dasNodeConfig: DasNodeConfig): string => {
+  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const dasNodeConfigFilename = 'das-config.json';
+  const filePath = configDir + '/' + dasNodeConfigFilename;
+  writeFileSync(filePath, JSON.stringify(dasNodeConfig, null, 2));
+
+  return filePath;
+};
+
+//
+// Contract JSON file helpers
+//
 export const saveCoreContractsFile = (coreContracts: CoreContracts): string => {
   const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
   const coreContractsFilename = 'core-contracts.json';
@@ -147,6 +202,9 @@ export const readTokenBridgeContractsFile = (): TokenBridgeContracts => {
   return JSON.parse(readFileSync(filePath, 'utf8'));
 };
 
+//
+// Orbit chain information helpers
+//
 export const getOrbitChainInformation = () => {
   if (
     !process.env.NITRO_RPC_URL ||
@@ -197,4 +255,13 @@ export const getOrbitChainConfiguration = () => {
 
 export const chainIsL1 = (chain: Chain) => {
   return chain.id == 1 || chain.id == 11155111;
+};
+
+export const chainIsAnytrust = (): boolean => {
+  const orbitChainConfig = getOrbitChainConfiguration();
+  if (orbitChainConfig['chain-config'].arbitrum.DataAvailabilityCommittee == true) {
+    return true;
+  }
+
+  return false;
 };

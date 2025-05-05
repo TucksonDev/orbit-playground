@@ -6,6 +6,7 @@ import {
   createRollup,
   prepareNodeConfig,
   PrepareNodeConfigParams,
+  setValidKeysetPrepareTransactionRequest,
 } from '@arbitrum/orbit-sdk';
 import { generateChainId } from '@arbitrum/orbit-sdk/utils';
 import {
@@ -17,6 +18,10 @@ import {
   saveNodeConfigFile,
   chainIsL1,
   saveCoreContractsFile,
+  deepMerge,
+  prepareDasConfig,
+  saveDasNodeConfigFile,
+  chainIsAnytrust,
 } from '../../src/utils';
 import 'dotenv/config';
 
@@ -44,9 +49,10 @@ const validator = privateKeyToAccount(validatorPrivateKey).address;
 
 // Set the parent chain and create a public client for it
 const parentChainInformation = getChainConfigFromChainId(Number(process.env.PARENT_CHAIN_ID));
+const parentChainRpc = process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation);
 const parentChainPublicClient = createPublicClient({
   chain: parentChainInformation,
-  transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation)),
+  transport: http(parentChainRpc),
 });
 
 // Load the deployer account
@@ -68,6 +74,7 @@ const main = async () => {
     chainId: orbitChainId,
     arbitrum: {
       InitialChainOwner: chainOwner.address,
+      DataAvailabilityCommittee: process.env.USE_ANYTRUST == 'true' ? true : false,
     },
   });
 
@@ -92,6 +99,7 @@ const main = async () => {
       config: orbitChainConfig,
       batchPosters: [batchPoster],
       validators: [validator],
+      deployFactoriesToL2: process.env.DEPLOY_FACTORIES_TO_L2 == 'true' ? true : false,
     },
     account: chainOwner,
     parentChainPublicClient,
@@ -120,29 +128,42 @@ const main = async () => {
     batchPosterPrivateKey: batchPosterPrivateKey,
     validatorPrivateKey: validatorPrivateKey,
     parentChainId: parentChainInformation.id,
-    parentChainRpcUrl: process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation),
+    parentChainRpcUrl: parentChainRpc,
     parentChainBeaconRpcUrl: chainIsL1(parentChainInformation)
       ? process.env.PARENT_CHAIN_BEACON_RPC_URL
       : undefined,
   };
-  const nodeConfig = prepareNodeConfig(nodeConfigParameters);
+  let nodeConfig = prepareNodeConfig(nodeConfigParameters);
 
   if (process.env.DISABLE_L1_FINALITY) {
-    nodeConfig.node!['delayed-sequencer']!['require-full-finality'] = false;
-    nodeConfig.node!['batch-poster']!['max-delay'] = '5m';
-    nodeConfig.node!['batch-poster']!['data-poster'] = {
-      'wait-for-l1-finality': false,
+    const updatedNodeConfig = {
+      node: {
+        'delayed-sequencer': {
+          'require-full-finality': false,
+        },
+        'batch-poster': {
+          'max-delay': '5m',
+          'data-poster': {
+            'wait-for-l1-finality': false,
+          },
+        },
+        'staker': {
+          'make-assertion-interval': '5m',
+          'data-poster': {
+            'wait-for-l1-finality': false,
+          },
+        },
+        'parent-chain-reader': {
+          'use-finality-data': false,
+        },
+      },
+      execution: {
+        'parent-chain-reader': {
+          'use-finality-data': false,
+        },
+      },
     };
-    nodeConfig.node!['staker']!['make-assertion-interval'] = '5m';
-    nodeConfig.node!['staker']!['data-poster'] = {
-      'wait-for-l1-finality': false,
-    };
-    nodeConfig.node!['parent-chain-reader'] = {
-      'use-finality-data': false,
-    };
-    nodeConfig.execution!['parent-chain-reader'] = {
-      'use-finality-data': false,
-    };
+    nodeConfig = deepMerge(nodeConfig, updatedNodeConfig);
   }
 
   // Extra customizable options
@@ -152,6 +173,51 @@ const main = async () => {
 
   const filePath = saveNodeConfigFile(nodeConfig);
   console.log(`Node config written to ${filePath}`);
+
+  // If we want to use AnyTrust, we need to:
+  //    1. set the right keyset in the SequencerInbox
+  //    2. generate the DAS node configuration
+  if (chainIsAnytrust()) {
+    //
+    // Set the default keyset in the SequencerInbox
+    //
+
+    // Default keyset
+    const keyset =
+      '0x00000000000000010000000000000001012160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
+
+    // Prepare the transaction setting the keyset
+    const txRequest = await setValidKeysetPrepareTransactionRequest({
+      coreContracts: {
+        upgradeExecutor: coreContracts.upgradeExecutor,
+        sequencerInbox: coreContracts.sequencerInbox,
+      },
+      keyset,
+      account: chainOwner.address,
+      publicClient: parentChainPublicClient,
+    });
+
+    // Sign and send the transaction
+    const txHash = await parentChainPublicClient.sendRawTransaction({
+      serializedTransaction: await chainOwner.signTransaction(txRequest),
+    });
+
+    // Wait for the transaction receipt
+    const txReceipt = await parentChainPublicClient.waitForTransactionReceipt({ hash: txHash });
+
+    console.log(
+      `Keyset updated in ${getBlockExplorerUrl(parentChainInformation)}/tx/${
+        txReceipt.transactionHash
+      }`,
+    );
+
+    //
+    // Prepare DAS node config
+    //
+    const dasNodeConfig = prepareDasConfig(parentChainRpc, coreContracts.sequencerInbox);
+    const dasConfigFilePath = saveDasNodeConfigFile(dasNodeConfig);
+    console.log(`DAS node config written to ${dasConfigFilePath}`);
+  }
 };
 
 // Calling main

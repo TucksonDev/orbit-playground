@@ -1,6 +1,7 @@
 import { createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
+  chainIsAnytrust,
   getBlockExplorerUrl,
   getChainConfigFromChainId,
   getOrbitChainConfiguration,
@@ -123,47 +124,50 @@ const main = async () => {
     );
   }
 
-  // set weth gateway
-  const setWethGatewayTxRequest = await createTokenBridgePrepareSetWethGatewayTransactionRequest({
-    rollup: orbitChainConfig.rollup.rollup,
-    parentChainPublicClient,
-    orbitChainPublicClient,
-    account: chainOwner.address,
-    retryableGasOverrides: {
-      gasLimit: {
-        percentIncrease: 200n,
+  if (!chainIsAnytrust()) {
+    // set weth gateway
+    const setWethGatewayTxRequest = await createTokenBridgePrepareSetWethGatewayTransactionRequest({
+      rollup: orbitChainConfig.rollup.rollup,
+      parentChainPublicClient,
+      orbitChainPublicClient,
+      account: chainOwner.address,
+      retryableGasOverrides: {
+        gasLimit: {
+          percentIncrease: 200n,
+        },
       },
-    },
-  });
+    });
 
-  // sign and send the transaction
-  const setWethGatewayTxHash = await parentChainPublicClient.sendRawTransaction({
-    serializedTransaction: await chainOwner.signTransaction(setWethGatewayTxRequest),
-  });
+    // sign and send the transaction
+    const setWethGatewayTxHash = await parentChainPublicClient.sendRawTransaction({
+      serializedTransaction: await chainOwner.signTransaction(setWethGatewayTxRequest),
+    });
 
-  // get the transaction receipt after waiting for the transaction to complete
-  const setWethGatewayTxReceipt = createTokenBridgePrepareSetWethGatewayTransactionReceipt(
-    await parentChainPublicClient.waitForTransactionReceipt({ hash: setWethGatewayTxHash }),
-  );
-
-  console.log(
-    `Weth gateway set in ${getBlockExplorerUrl(parentChainInformation)}/tx/${
-      setWethGatewayTxReceipt.transactionHash
-    }`,
-  );
-
-  // Wait for retryables to execute
-  const orbitChainSetWethGatewayRetryableReceipt = await setWethGatewayTxReceipt.waitForRetryables({
-    orbitPublicClient: orbitChainPublicClient,
-  });
-  console.log(`Retryables executed`);
-  console.log(
-    `Transaction hash for retryable is ${orbitChainSetWethGatewayRetryableReceipt[0].transactionHash}`,
-  );
-  if (orbitChainSetWethGatewayRetryableReceipt[0].status !== 'success') {
-    throw new Error(
-      `Retryable status is not success: ${orbitChainSetWethGatewayRetryableReceipt[0].status}. Aborting...`,
+    // get the transaction receipt after waiting for the transaction to complete
+    const setWethGatewayTxReceipt = createTokenBridgePrepareSetWethGatewayTransactionReceipt(
+      await parentChainPublicClient.waitForTransactionReceipt({ hash: setWethGatewayTxHash }),
     );
+
+    console.log(
+      `Weth gateway set in ${getBlockExplorerUrl(parentChainInformation)}/tx/${
+        setWethGatewayTxReceipt.transactionHash
+      }`,
+    );
+
+    // Wait for retryables to execute
+    const orbitChainSetWethGatewayRetryableReceipt =
+      await setWethGatewayTxReceipt.waitForRetryables({
+        orbitPublicClient: orbitChainPublicClient,
+      });
+    console.log(`Retryables executed`);
+    console.log(
+      `Transaction hash for retryable is ${orbitChainSetWethGatewayRetryableReceipt[0].transactionHash}`,
+    );
+    if (orbitChainSetWethGatewayRetryableReceipt[0].status !== 'success') {
+      throw new Error(
+        `Retryable status is not success: ${orbitChainSetWethGatewayRetryableReceipt[0].status}. Aborting...`,
+      );
+    }
   }
 };
 
