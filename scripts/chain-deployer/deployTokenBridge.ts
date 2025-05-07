@@ -1,9 +1,10 @@
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, http, zeroAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
   chainIsAnytrust,
   getBlockExplorerUrl,
   getChainConfigFromChainId,
+  getChainNativeToken,
   getOrbitChainConfiguration,
   getOrbitChainInformation,
   getRpcUrl,
@@ -12,6 +13,8 @@ import {
 } from '../../src/utils';
 import 'dotenv/config';
 import {
+  createTokenBridgeEnoughCustomFeeTokenAllowance,
+  createTokenBridgePrepareCustomFeeTokenApprovalTransactionRequest,
   createTokenBridgePrepareSetWethGatewayTransactionReceipt,
   createTokenBridgePrepareSetWethGatewayTransactionRequest,
   createTokenBridgePrepareTransactionReceipt,
@@ -49,6 +52,38 @@ const main = async () => {
   console.log('* Token bridge deployer *');
   console.log('*************************');
   console.log('');
+
+  // Check for native token
+  const nativeToken = (await getChainNativeToken(parentChainPublicClient)) as `0x${string}`;
+
+  if (nativeToken != zeroAddress) {
+    // prepare transaction to approve custom fee token spend
+    const allowanceParams = {
+      nativeToken,
+      owner: chainOwner.address,
+      publicClient: parentChainPublicClient,
+    };
+    if (!(await createTokenBridgeEnoughCustomFeeTokenAllowance(allowanceParams))) {
+      const approvalTxRequest =
+        await createTokenBridgePrepareCustomFeeTokenApprovalTransactionRequest(allowanceParams);
+
+      // sign and send the transaction
+      const approvalTxHash = await parentChainPublicClient.sendRawTransaction({
+        serializedTransaction: await chainOwner.signTransaction(approvalTxRequest),
+      });
+
+      // get the transaction receipt after waiting for the transaction to complete
+      const approvalTxReceipt = await parentChainPublicClient.waitForTransactionReceipt({
+        hash: approvalTxHash,
+      });
+
+      console.log(
+        `Tokens approved in ${getBlockExplorerUrl(parentChainInformation)}/tx/${
+          approvalTxReceipt.transactionHash
+        }`,
+      );
+    }
+  }
 
   const txRequest = await createTokenBridgePrepareTransactionRequest({
     params: {

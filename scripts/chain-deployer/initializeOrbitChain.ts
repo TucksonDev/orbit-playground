@@ -3,8 +3,10 @@ import {
   createWalletClient,
   formatEther,
   http,
+  maxUint256,
   parseAbi,
   parseEther,
+  zeroAddress,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
@@ -15,6 +17,7 @@ import {
   delay,
   getOrbitChainConfiguration,
   getRpcUrl,
+  getChainNativeToken,
 } from '../../src/utils';
 import 'dotenv/config';
 
@@ -134,19 +137,57 @@ const main = async () => {
       `Deployer account already funded (balance: ${formatEther(startBalance)}). Skipping...`,
     );
   } else {
-    const { request } = await parentChainPublicClient.simulateContract({
-      account: chainOwner,
-      address: orbitChainConfig.rollup.inbox,
-      abi: parseAbi(['function depositEth() public payable']),
-      functionName: 'depositEth',
-      value: fundingAmountWei,
-    });
-    const fundDeployerTxHash = await parentChainWalletClient.writeContract(request);
-    console.log(
-      `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
-        parentChainInformation,
-      )}/tx/${fundDeployerTxHash}`,
-    );
+    // Check for native token
+    const nativeToken = (await getChainNativeToken(parentChainPublicClient)) as `0x${string}`;
+
+    if (nativeToken != zeroAddress) {
+      // Approve native token to deposit through inbox
+      console.log('Approving the native token to deposit through inbox');
+      const { request: approvalRequest } = await parentChainPublicClient.simulateContract({
+        account: chainOwner,
+        address: nativeToken,
+        abi: parseAbi(['function approve(address,uint256) public payable']),
+        functionName: 'approve',
+        args: [orbitChainConfig.rollup.inbox, maxUint256],
+      });
+
+      const approvalTxHash = await parentChainWalletClient.writeContract(approvalRequest);
+      console.log(
+        `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
+          parentChainInformation,
+        )}/tx/${approvalTxHash}`,
+      );
+
+      const { request } = await parentChainPublicClient.simulateContract({
+        account: chainOwner,
+        address: orbitChainConfig.rollup.inbox,
+        abi: parseAbi(['function depositERC20(uint256) public payable']),
+        functionName: 'depositERC20',
+        args: [fundingAmountWei],
+      });
+
+      const fundDeployerTxHash = await parentChainWalletClient.writeContract(request);
+      console.log(
+        `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
+          parentChainInformation,
+        )}/tx/${fundDeployerTxHash}`,
+      );
+    } else {
+      const { request } = await parentChainPublicClient.simulateContract({
+        account: chainOwner,
+        address: orbitChainConfig.rollup.inbox,
+        abi: parseAbi(['function depositEth() public payable']),
+        functionName: 'depositEth',
+        value: fundingAmountWei,
+      });
+
+      const fundDeployerTxHash = await parentChainWalletClient.writeContract(request);
+      console.log(
+        `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
+          parentChainInformation,
+        )}/tx/${fundDeployerTxHash}`,
+      );
+    }
 
     // Wait for balance to be updated
     console.log(`Waiting for funds to arrive to the Orbit chain (it might take a few minutes)...`);

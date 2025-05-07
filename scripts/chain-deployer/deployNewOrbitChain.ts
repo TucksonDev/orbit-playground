@@ -1,4 +1,4 @@
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, getAddress, http, zeroAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
   createRollupPrepareDeploymentParamsConfig,
@@ -91,6 +91,11 @@ const main = async () => {
   console.log(`Chain configuration is:`);
   console.log(orbitChainConfig);
 
+  // Native token check
+  const nativeToken =
+    (process.env.NATIVE_TOKEN_ADDRESS && getAddress(process.env.NATIVE_TOKEN_ADDRESS)) ||
+    zeroAddress;
+
   //
   // Rollup contracts deployment
   //
@@ -99,6 +104,7 @@ const main = async () => {
       config: orbitChainConfig,
       batchPosters: [batchPoster],
       validators: [validator],
+      nativeToken,
       deployFactoriesToL2: process.env.DEPLOY_FACTORIES_TO_L2 == 'true' ? true : false,
     },
     account: chainOwner,
@@ -142,13 +148,13 @@ const main = async () => {
           'require-full-finality': false,
         },
         'batch-poster': {
-          'max-delay': '5m',
+          'max-delay': '1m',
           'data-poster': {
             'wait-for-l1-finality': false,
           },
         },
         'staker': {
-          'make-assertion-interval': '5m',
+          'make-assertion-interval': '1m',
           'data-poster': {
             'wait-for-l1-finality': false,
           },

@@ -1,4 +1,4 @@
-import { Address, Chain, defineChain } from 'viem';
+import { Address, Chain, defineChain, parseAbi, PublicClient, zeroAddress } from 'viem';
 import { generatePrivateKey } from 'viem/accounts';
 import { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia } from 'viem/chains';
 import { DasNodeConfig, OrbitDeploymentContracts, TokenBridgeContracts } from './types';
@@ -264,4 +264,24 @@ export const chainIsAnytrust = (): boolean => {
   }
 
   return false;
+};
+
+export const getChainNativeToken = async (
+  parentChainPublicClient: PublicClient,
+): Promise<string> => {
+  const orbitChainConfig = getOrbitChainConfiguration();
+  const bridge = orbitChainConfig.rollup.bridge;
+  let nativeToken: string = zeroAddress;
+  try {
+    const bridgeNativeToken = await parentChainPublicClient.readContract({
+      address: bridge,
+      abi: parseAbi(['function nativeToken() public view returns (address)']),
+      functionName: 'nativeToken',
+    });
+    nativeToken = bridgeNativeToken;
+  } catch (e) {
+    // No need to do anything. Native token stays the zero address.
+  }
+
+  return nativeToken;
 };
