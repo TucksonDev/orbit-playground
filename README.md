@@ -24,19 +24,15 @@ Make a copy of the `.env.example` file and call it `.env`. Then, make sure you s
 
     `yarn run deployChain`
 
-2. Build your nitro node
-
-    `yarn run buildNitro`
-
-3. Launch your nitro node
+2. Launch your nitro node
 
     `docker compose up`
 
-4. Initialize your chain
+3. Initialize your chain
 
     `yarn run initialize`
 
-5. (Optional) Deploy the Token Bridge
+4. (Optional) Deploy the Token Bridge
 
     `yarn run deployTokenBridge`
 
@@ -53,9 +49,3 @@ Follow these steps to complete the process.
 2. Update the WASM module root
 
     `yarn run updateWASM <WASM module root>`
-
-## Run your node without Blockscout
-
-To run your node without blockscout, simply specify the appropriate services in the docker compose command:
-
-`docker compose up nitro das-server`
