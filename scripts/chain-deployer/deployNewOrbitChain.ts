@@ -22,6 +22,7 @@ import {
   prepareDasConfig,
   saveDasNodeConfigFile,
   chainIsAnytrust,
+  splitConfigPerType,
 } from '../../src/utils';
 import 'dotenv/config';
 
@@ -30,12 +31,10 @@ if (
   !process.env.PARENT_CHAIN_ID ||
   !process.env.CHAIN_OWNER_PRIVATE_KEY ||
   !process.env.BATCH_POSTER_PRIVATE_KEY ||
-  !process.env.STAKER_PRIVATE_KEY ||
-  !process.env.CHAIN_CONFIG_FOLDER ||
-  !process.env.NODE_CONFIG_FILENAME
+  !process.env.STAKER_PRIVATE_KEY
 ) {
   throw new Error(
-    'The following environment variables must be present: PARENT_CHAIN_ID, CHAIN_OWNER_PRIVATE_KEY, BATC_POSTER_PRIVATE_KEY, STAKER_PRIVATE_KEY, CHAIN_CONFIG_FOLDER, NODE_CONFIG_FILENAME',
+    'The following environment variables must be present: PARENT_CHAIN_ID, CHAIN_OWNER_PRIVATE_KEY, BATC_POSTER_PRIVATE_KEY, STAKER_PRIVATE_KEY',
   );
 }
 
@@ -139,22 +138,20 @@ const main = async () => {
       ? process.env.PARENT_CHAIN_BEACON_RPC_URL
       : undefined,
   };
-  let nodeConfig = prepareNodeConfig(nodeConfigParameters);
+  let baseNodeConfig = prepareNodeConfig(nodeConfigParameters);
 
-  if (process.env.DISABLE_L1_FINALITY) {
+  if (process.env.DISABLE_L1_FINALITY === 'true') {
     const updatedNodeConfig = {
       node: {
         'delayed-sequencer': {
           'require-full-finality': false,
         },
         'batch-poster': {
-          'max-delay': '1m',
           'data-poster': {
             'wait-for-l1-finality': false,
           },
         },
         'staker': {
-          'make-assertion-interval': '1m',
           'data-poster': {
             'wait-for-l1-finality': false,
           },
@@ -169,16 +166,50 @@ const main = async () => {
         },
       },
     };
-    nodeConfig = deepMerge(nodeConfig, updatedNodeConfig);
+    baseNodeConfig = deepMerge(baseNodeConfig, updatedNodeConfig);
+  }
+
+  if (process.env.USE_FAST_L1_POSTING === 'true') {
+    const updatedNodeConfig = {
+      node: {
+        'batch-poster': {
+          'max-delay': '1m',
+        },
+        'staker': {
+          'make-assertion-interval': '1m',
+        },
+      },
+    };
+    baseNodeConfig = deepMerge(baseNodeConfig, updatedNodeConfig);
   }
 
   // Extra customizable options
-  if (process.env.NITRO_PORT) {
-    nodeConfig.http!.port = Number(process.env.NITRO_PORT);
+  if (process.env.NITRO_PORT != '') {
+    baseNodeConfig.http!.port = Number(process.env.NITRO_PORT);
   }
 
-  const filePath = saveNodeConfigFile(nodeConfig);
-  console.log(`Node config written to ${filePath}`);
+  //
+  // NOTE:
+  // The following configuration is added to the batch poster in the docker-compose file
+  //    - --node.feed.output.enable
+  //    - --node.feed.output.port=9642
+  //
+  // The following configuration is added to the staker and rpc in the docker-compose file
+  //    - --execution.forwarding-target 'http://batch-poster:8449'
+  //    - --node.feed.input.url ws://batch-poster:9642
+  //
+
+  // Split config into the different entities
+  const { batchPosterConfig, stakerConfig, rpcConfig } = splitConfigPerType(baseNodeConfig);
+
+  const batchPosterfilePath = saveNodeConfigFile('batch-poster', batchPosterConfig);
+  console.log(`Batch poster config written to ${batchPosterfilePath}`);
+
+  const stakerFilePath = saveNodeConfigFile('staker', stakerConfig);
+  console.log(`Staker config written to ${stakerFilePath}`);
+
+  const rpcFilePath = saveNodeConfigFile('rpc', rpcConfig);
+  console.log(`RPC config written to ${rpcFilePath}`);
 
   // If we want to use AnyTrust, we need to:
   //    1. set the right keyset in the SequencerInbox

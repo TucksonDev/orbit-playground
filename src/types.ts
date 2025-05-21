@@ -1,5 +1,7 @@
 import { Address } from 'viem';
 
+export type NodeType = 'batch-poster' | 'staker' | 'rpc';
+
 export interface OrbitConfig {
   'chainOwner': string;
   'rollup': string;

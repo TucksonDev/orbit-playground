@@ -39,7 +39,7 @@ const main = async () => {
   //
   // Creating backup of the current config file
   //
-  const nodeConfigFileLocation = getNodeConfigFileLocation();
+  const nodeConfigFileLocation = getNodeConfigFileLocation('rpc');
   const currentTimestamp = Math.floor(Date.now() / 1000);
   const backupNodeConfigFilePath =
     nodeConfigFileLocation.dir + '/' + currentTimestamp + '-' + nodeConfigFileLocation.fileName;
@@ -51,7 +51,7 @@ const main = async () => {
   //
   // Getting the current configuration
   //
-  const nodeConfig = readNodeConfigFile();
+  const nodeConfig = readNodeConfigFile('rpc');
 
   //
   // Updating the current configuration
@@ -61,7 +61,7 @@ const main = async () => {
   //
   // Saving the updated configuration
   //
-  const filePath = saveNodeConfigFile(newNodeConfig);
+  const filePath = saveNodeConfigFile('rpc', newNodeConfig);
   console.log(
     `Node config has been updated in ${filePath}, and a backup of the previous file has been created at ${backupNodeConfigFilePath}`,
   );

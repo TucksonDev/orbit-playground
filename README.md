@@ -36,6 +36,22 @@ Make a copy of the `.env.example` file and call it `.env`. Then, make sure you s
 
     `yarn run deployTokenBridge`
 
+## Structure of docker containers
+
+When starting your nodes with `docker compose up`, up to four containers will start:
+
+- `batch-poster`: the sequencer/batch-poster for your chain
+- `staker`: the validator/staker for your chain
+- `rpc`: a regular RPC node for your chain
+- `das-server`: a Data Availability Server if you're running an AnyTrust chain
+
+You can manage each individual container with the following commands:
+
+- `docker compose stop <container>`: stops the specified container
+- `docker compose start <container>`: starts the specified container
+- `docker compose restart <container>`: restarts the specified container
+- `docker compose create <container>`: creates the specified container (in case it's been removed)
+
 ## Update the WASM module root of your node (WIP)
 
 When you modify the State Transition Function (STF) of your node, you have to update the WASM module root on-chain. You can find more information about what this means in the [Arbitrum documentation portal](https://docs.arbitrum.io/launch-orbit-chain/how-tos/customize-stf).

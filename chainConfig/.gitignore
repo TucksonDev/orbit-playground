@@ -2,5 +2,10 @@
 *
 # Except this file
 !.gitignore
-!keys
-!keys/*
+
+!batch-poster
+!staker
+!rpc
+!das-server
+!das-server/keys
+!das-server/keys/*

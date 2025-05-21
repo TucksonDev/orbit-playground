@@ -1,18 +1,48 @@
 version: '3.9'
 services:
-  nitro:
+  batch-poster:
+    image: "${NITRO_DOCKER_IMAGE_TAG}"
+    ports:
+      - "127.0.0.1:8149:${NITRO_PORT}"
+      - "127.0.0.1:9642:9642"
+    volumes:
+      - "./chainConfig/batch-poster:/home/user/.arbitrum"
+    command:
+      - --conf.file=/home/user/.arbitrum/batch-poster-config.json
+      - --node.feed.output.enable
+      - --node.feed.output.port=9642
+
+  staker:
+    depends_on:
+      - batch-poster
+    image: "${NITRO_DOCKER_IMAGE_TAG}"
+    ports:
+      - "127.0.0.1:8249:${NITRO_PORT}"
+    volumes:
+      - "./chainConfig/staker:/home/user/.arbitrum"
+    command:
+      - --conf.file=/home/user/.arbitrum/staker-config.json
+      - --execution.forwarding-target=http://batch-poster:8449
+      - --node.feed.input.url=ws://batch-poster:9642
+
+  rpc:
+    depends_on:
+      - batch-poster
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     ports:
       - "127.0.0.1:${NITRO_PORT}:${NITRO_PORT}"
     volumes:
-      - "./${CHAIN_CONFIG_FOLDER}:/home/user/.arbitrum"
-    command: --conf.file /home/user/.arbitrum/${NODE_CONFIG_FILENAME}.json
+      - "./chainConfig/rpc:/home/user/.arbitrum"
+    command:
+      - --conf.file=/home/user/.arbitrum/rpc-config.json
+      - --execution.forwarding-target=http://batch-poster:8449
+      - --node.feed.input.url=ws://batch-poster:9642
 
   das-server:
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     entrypoint: [ "/bin/bash", "-c", "/das-server.sh ${USE_ANYTRUST}" ]
     volumes:
-      - "./${CHAIN_CONFIG_FOLDER}:/home/user/.arbitrum"
+      - "./chainConfig/das-server:/home/user/.arbitrum"
       - "./shell-scripts/das-server.sh:/das-server.sh"
       - "./${DAS_LOCAL_STORAGE}:/home/user/das-data"
     ports:

@@ -1,7 +1,7 @@
 import { Address, Chain, defineChain, parseAbi, PublicClient, zeroAddress } from 'viem';
 import { generatePrivateKey } from 'viem/accounts';
 import { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia } from 'viem/chains';
-import { DasNodeConfig, OrbitDeploymentContracts, TokenBridgeContracts } from './types';
+import { DasNodeConfig, NodeType, OrbitDeploymentContracts, TokenBridgeContracts } from './types';
 import { orbitDeploymentContracts } from './contracts';
 import { readFileSync, writeFileSync } from 'fs';
 import { CoreContracts, NodeConfig } from '@arbitrum/orbit-sdk';
@@ -98,32 +98,93 @@ export const getContractsFromChainId = (chainId: number): OrbitDeploymentContrac
 //
 // Node configuration helpers
 //
-export const getNodeConfigFileLocation = (): {
+export const getNodeConfigFileName = (nodeType: NodeType): string => {
+  switch (nodeType) {
+    case 'batch-poster':
+      return 'batch-poster-config.json';
+    case 'staker':
+      return 'staker-config.json';
+  }
+
+  return 'rpc-config.json';
+};
+
+export const getNodeConfigFileLocation = (
+  nodeType: NodeType,
+): {
   dir: string;
   fileName: string;
 } => {
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
-  const nodeConfigFilename = (process.env.NODE_CONFIG_FILENAME || 'node-config') + '.json';
+  const configDir = 'chainConfig/' + nodeType;
+  const nodeConfigFilename = getNodeConfigFileName(nodeType);
   return {
     dir: configDir,
     fileName: nodeConfigFilename,
   };
 };
 
-export const saveNodeConfigFile = (nodeConfig: NodeConfig): string => {
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
-  const nodeConfigFilename = (process.env.NODE_CONFIG_FILENAME || 'node-config') + '.json';
+export const saveNodeConfigFile = (nodeType: NodeType, nodeConfig: NodeConfig): string => {
+  const configDir = 'chainConfig/' + nodeType;
+  const nodeConfigFilename = getNodeConfigFileName(nodeType);
   const filePath = configDir + '/' + nodeConfigFilename;
   writeFileSync(filePath, JSON.stringify(nodeConfig, null, 2));
 
   return filePath;
 };
 
-export const readNodeConfigFile = (): NodeConfig => {
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
-  const nodeConfigFilename = (process.env.NODE_CONFIG_FILENAME || 'node-config') + '.json';
+export const readNodeConfigFile = (nodeType: NodeType): NodeConfig => {
+  const configDir = 'chainConfig/' + nodeType;
+  const nodeConfigFilename = getNodeConfigFileName(nodeType);
   const filePath = configDir + '/' + nodeConfigFilename;
   return JSON.parse(readFileSync(filePath, 'utf8'));
+};
+
+export const splitConfigPerType = (
+  baseNodeConfig: NodeConfig,
+): {
+  batchPosterConfig: NodeConfig;
+  stakerConfig: NodeConfig;
+  rpcConfig: NodeConfig;
+} => {
+  // Batch poster config
+  const batchPosterConfig = JSON.parse(JSON.stringify(baseNodeConfig));
+  if (batchPosterConfig.node && batchPosterConfig.node.staker) {
+    delete batchPosterConfig.node.staker;
+  }
+
+  // Staker config
+  const stakerConfig = JSON.parse(JSON.stringify(baseNodeConfig));
+  if (stakerConfig.node && stakerConfig.node.sequencer) {
+    delete stakerConfig.node.sequencer;
+  }
+  if (stakerConfig.node && stakerConfig.node['delayed-sequencer']) {
+    delete stakerConfig.node['delayed-sequencer'];
+  }
+  if (stakerConfig.node && stakerConfig.node['batch-poster']) {
+    delete stakerConfig.node['batch-poster'];
+  }
+  if (
+    stakerConfig.node &&
+    stakerConfig.node.dangerous &&
+    stakerConfig.node.dangerous['no-sequencer-coordinator']
+  ) {
+    delete stakerConfig.node.dangerous['no-sequencer-coordinator'];
+  }
+  if (stakerConfig.execution && stakerConfig.execution.sequencer) {
+    delete stakerConfig.execution.sequencer;
+  }
+
+  // RPC config
+  const rpcConfig = JSON.parse(JSON.stringify(stakerConfig));
+  if (rpcConfig.node && rpcConfig.node.staker) {
+    delete rpcConfig.node.staker;
+  }
+
+  return {
+    batchPosterConfig,
+    stakerConfig,
+    rpcConfig,
+  };
 };
 
 export const prepareDasConfig = (
@@ -156,7 +217,7 @@ export const prepareDasConfig = (
 };
 
 export const saveDasNodeConfigFile = (dasNodeConfig: DasNodeConfig): string => {
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const configDir = 'chainConfig/das-server';
   const dasNodeConfigFilename = 'das-config.json';
   const filePath = configDir + '/' + dasNodeConfigFilename;
   writeFileSync(filePath, JSON.stringify(dasNodeConfig, null, 2));
@@ -168,7 +229,7 @@ export const saveDasNodeConfigFile = (dasNodeConfig: DasNodeConfig): string => {
 // Contract JSON file helpers
 //
 export const saveCoreContractsFile = (coreContracts: CoreContracts): string => {
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const configDir = 'chainConfig';
   const coreContractsFilename = 'core-contracts.json';
   const filePath = configDir + '/' + coreContractsFilename;
   writeFileSync(filePath, JSON.stringify(coreContracts, null, 2));
@@ -177,7 +238,7 @@ export const saveCoreContractsFile = (coreContracts: CoreContracts): string => {
 };
 
 export const readCoreContractsFile = (): CoreContracts => {
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const configDir = 'chainConfig';
   const coreContractsFilename = 'core-contracts.json';
   const filePath = configDir + '/' + coreContractsFilename;
   return JSON.parse(readFileSync(filePath, 'utf8'));
@@ -187,7 +248,7 @@ export const readCoreContractsFile = (): CoreContracts => {
 export const saveTokenBridgeContractsFile = (
   tokenBridgeContracts: TokenBridgeContracts,
 ): string => {
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const configDir = 'chainConfig';
   const tokenBridgeContractsFilename = 'token-bridge-contracts.json';
   const filePath = configDir + '/' + tokenBridgeContractsFilename;
   writeFileSync(filePath, JSON.stringify(tokenBridgeContracts, null, 2));
@@ -196,7 +257,7 @@ export const saveTokenBridgeContractsFile = (
 };
 
 export const readTokenBridgeContractsFile = (): TokenBridgeContracts => {
-  const configDir = process.env.CHAIN_CONFIG_FOLDER || 'chainConfig';
+  const configDir = 'chainConfig';
   const tokenBridgeContractsFilename = 'token-bridge-contracts.json';
   const filePath = configDir + '/' + tokenBridgeContractsFilename;
   return JSON.parse(readFileSync(filePath, 'utf8'));
@@ -217,7 +278,7 @@ export const getOrbitChainInformation = () => {
     );
   }
 
-  const nodeConfig = readNodeConfigFile();
+  const nodeConfig = readNodeConfigFile('rpc');
   const orbitChainConfig = JSON.parse(nodeConfig.chain!['info-json']!)[0];
   const orbitChainId = Number(orbitChainConfig['chain-id']);
 
@@ -248,7 +309,7 @@ export const getOrbitChainInformation = () => {
 };
 
 export const getOrbitChainConfiguration = () => {
-  const nodeConfig = readNodeConfigFile();
+  const nodeConfig = readNodeConfigFile('rpc');
   const orbitChainConfig = JSON.parse(nodeConfig.chain!['info-json']!)[0];
   return orbitChainConfig;
 };
