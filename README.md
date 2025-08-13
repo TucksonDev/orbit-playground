@@ -36,6 +36,10 @@ Make a copy of the `.env.example` file and call it `.env`. Then, make sure you s
 
     `yarn run deployTokenBridge`
 
+5. (Optional) Transfer ownership of the chain to the UpgradeExecutor
+
+    `yarn run transferOwnership`
+
 ## Structure of docker containers
 
 When starting your nodes with `docker compose up`, up to four containers will start:

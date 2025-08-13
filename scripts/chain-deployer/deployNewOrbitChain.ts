@@ -1,4 +1,4 @@
-import { createPublicClient, getAddress, http, zeroAddress } from 'viem';
+import { createPublicClient, getAddress, http, parseEther, zeroAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
   createRollupPrepareDeploymentParamsConfig,
@@ -74,6 +74,8 @@ const main = async () => {
     arbitrum: {
       InitialChainOwner: chainOwner.address,
       DataAvailabilityCommittee: process.env.USE_ANYTRUST == 'true' ? true : false,
+      // Remove once the Orbit SDK default is updated
+      InitialArbOSVersion: 40,
     },
   });
 
@@ -82,10 +84,15 @@ const main = async () => {
     chainConfig,
     chainId: BigInt(orbitChainId),
     owner: chainOwner.address,
-  });
 
-  // Extra parametrization
-  orbitChainConfig.confirmPeriodBlocks = BigInt(20);
+    // Extra parametrization
+    confirmPeriodBlocks: 20n, // Reduce confirm period blocks
+    baseStake: parseEther('0.1'), // Reduce base stake for proving
+
+    // Remove once the Orbit SDK default is updated
+    // ref: https://github.com/OffchainLabs/nitro/releases/tag/consensus-v40
+    wasmModuleRoot: '0xdb698a2576298f25448bc092e52cf13b1e24141c997135d70f217d674bbeb69a',
+  });
 
   console.log(`Chain configuration is:`);
   console.log(orbitChainConfig);
@@ -132,6 +139,7 @@ const main = async () => {
     coreContracts,
     batchPosterPrivateKey: batchPosterPrivateKey,
     validatorPrivateKey: validatorPrivateKey,
+    stakeToken: orbitChainConfig.stakeToken,
     parentChainId: parentChainInformation.id,
     parentChainRpcUrl: parentChainRpc,
     parentChainBeaconRpcUrl: chainIsL1(parentChainInformation)
@@ -143,6 +151,9 @@ const main = async () => {
   if (process.env.DISABLE_L1_FINALITY === 'true') {
     const updatedNodeConfig = {
       node: {
+        'parent-chain-reader': {
+          'use-finality-data': false,
+        },
         'delayed-sequencer': {
           'require-full-finality': false,
         },
@@ -156,8 +167,11 @@ const main = async () => {
             'wait-for-l1-finality': false,
           },
         },
-        'parent-chain-reader': {
-          'use-finality-data': false,
+        'bold': {
+          'rpc-block-number': 'latest',
+          'state-provider-config': {
+            'check-batch-finality': false,
+          },
         },
       },
       execution: {
@@ -177,6 +191,9 @@ const main = async () => {
         },
         'staker': {
           'make-assertion-interval': '1m',
+        },
+        'bold': {
+          'assertion-posting-interval': '1m',
         },
       },
     };

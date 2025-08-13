@@ -37,15 +37,6 @@ export interface OrbitChainInformation {
   blockexplorerUrl: string;
 }
 
-export type OrbitDeploymentContracts = {
-  rollupCreator: Address;
-  tokenBridgeCreator: Address;
-};
-
-export type OrbitDeploymentContractsMap = {
-  [key: number]: OrbitDeploymentContracts;
-};
-
 /*
   Temporary type definitions
   (This are likely to be exposed or added on the Orbit SDK in the future)

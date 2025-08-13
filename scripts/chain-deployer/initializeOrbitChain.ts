@@ -18,6 +18,8 @@ import {
   getOrbitChainConfiguration,
   getRpcUrl,
   getChainNativeToken,
+  getChainBaseStake,
+  getChainStakeToken,
 } from '../../src/utils';
 import 'dotenv/config';
 
@@ -119,6 +121,47 @@ const main = async () => {
       `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
         parentChainInformation,
       )}/tx/${fundStakerTxHash}`,
+    );
+    // NOTE: it looks like viem is not handling the nonce correctly when making calls this quickly.
+    // Adding a delay of 10 seconds solves this issue.
+    await delay(10 * 1000);
+  }
+
+  const stakeToken = getChainStakeToken();
+  const baseStakeWei = await getChainBaseStake(parentChainPublicClient);
+  console.log(
+    `Fund staker account on parent chain with ${formatEther(
+      baseStakeWei,
+    )} stake token (${stakeToken})...`,
+  );
+  const currentStakeTokenBalance = await parentChainPublicClient.readContract({
+    address: stakeToken,
+    abi: parseAbi(['function balanceOf(address) public view returns (uint256)']),
+    functionName: 'balanceOf',
+    args: [validatorAddress],
+  });
+  if (currentStakeTokenBalance >= baseStakeWei) {
+    console.log(
+      `Staker already funded with stake token (balance: ${formatEther(
+        currentStakeTokenBalance,
+      )}). Skipping...`,
+    );
+  } else {
+    const { request: fundStakeTokenTxRequest } = await parentChainPublicClient.simulateContract({
+      account: parentChainWalletClient.account,
+      address: stakeToken,
+      abi: parseAbi(['function depositTo(address) public payable']),
+      functionName: 'depositTo',
+      args: [validatorAddress],
+      value: baseStakeWei,
+    });
+    const fundStakeTokenTxHash = await parentChainWalletClient.writeContract(
+      fundStakeTokenTxRequest,
+    );
+    console.log(
+      `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
+        parentChainInformation,
+      )}/tx/${fundStakeTokenTxHash}`,
     );
     // NOTE: it looks like viem is not handling the nonce correctly when making calls this quickly.
     // Adding a delay of 10 seconds solves this issue.

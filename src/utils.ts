@@ -1,8 +1,7 @@
 import { Address, Chain, defineChain, parseAbi, PublicClient, zeroAddress } from 'viem';
 import { generatePrivateKey } from 'viem/accounts';
 import { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia } from 'viem/chains';
-import { DasNodeConfig, NodeType, OrbitDeploymentContracts, TokenBridgeContracts } from './types';
-import { orbitDeploymentContracts } from './contracts';
+import { DasNodeConfig, NodeType, TokenBridgeContracts } from './types';
 import { readFileSync, writeFileSync } from 'fs';
 import { CoreContracts, NodeConfig } from '@arbitrum/orbit-sdk';
 import * as readline from 'readline';
@@ -85,17 +84,6 @@ export const getRpcUrl = (chain: Chain) => {
 };
 
 //
-// Contract helpers
-//
-export const getContractsFromChainId = (chainId: number): OrbitDeploymentContracts => {
-  if (!orbitDeploymentContracts[chainId]) {
-    throw new Error(`No deployment contracts found for chain id ${chainId}`);
-  }
-
-  return orbitDeploymentContracts[chainId];
-};
-
-//
 // Node configuration helpers
 //
 export const getNodeConfigFileName = (nodeType: NodeType): string => {
@@ -151,6 +139,20 @@ export const splitConfigPerType = (
   if (batchPosterConfig.node && batchPosterConfig.node.staker) {
     delete batchPosterConfig.node.staker;
   }
+  if (
+    batchPosterConfig.node &&
+    batchPosterConfig.node.bold &&
+    batchPosterConfig.node.bold.strategy
+  ) {
+    delete batchPosterConfig.node.bold.strategy;
+  }
+  if (
+    batchPosterConfig.node &&
+    batchPosterConfig.node.bold &&
+    batchPosterConfig.node.bold['assertion-posting-interval']
+  ) {
+    delete batchPosterConfig.node.bold['assertion-posting-interval'];
+  }
 
   // Staker config
   const stakerConfig = JSON.parse(JSON.stringify(baseNodeConfig));
@@ -178,6 +180,12 @@ export const splitConfigPerType = (
   const rpcConfig = JSON.parse(JSON.stringify(stakerConfig));
   if (rpcConfig.node && rpcConfig.node.staker) {
     delete rpcConfig.node.staker;
+  }
+  if (rpcConfig.node && rpcConfig.node.bold && rpcConfig.node.bold.strategy) {
+    delete rpcConfig.node.bold.strategy;
+  }
+  if (rpcConfig.node && rpcConfig.node.bold && rpcConfig.node.bold['assertion-posting-interval']) {
+    delete rpcConfig.node.bold['assertion-posting-interval'];
   }
 
   return {
@@ -345,4 +353,21 @@ export const getChainNativeToken = async (
   }
 
   return nativeToken;
+};
+
+export const getChainStakeToken = (): Address => {
+  const orbitChainConfig = getOrbitChainConfiguration();
+  return orbitChainConfig.rollup['stake-token'] as Address;
+};
+
+export const getChainBaseStake = async (parentChainPublicClient: PublicClient): Promise<bigint> => {
+  const orbitChainConfig = getOrbitChainConfiguration();
+  const rollup = orbitChainConfig.rollup.rollup;
+  const baseStake = await parentChainPublicClient.readContract({
+    address: rollup,
+    abi: parseAbi(['function baseStake() public view returns (uint256)']),
+    functionName: 'baseStake',
+  });
+
+  return baseStake;
 };
