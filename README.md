@@ -22,27 +22,27 @@ Make a copy of the `.env.example` file and call it `.env`. Then, make sure you s
 
 1. Deploy the contracts
 
-    `yarn run deployChain`
+    `yarn deploy-chain`
 
 2. Launch your nitro node
 
-    `docker compose up`
+    `yarn start-node`
 
 3. Initialize your chain
 
-    `yarn run initialize`
+    `yarn initialize-chain`
 
 4. (Optional) Deploy the Token Bridge
 
-    `yarn run deployTokenBridge`
+    `yarn deploy-token-bridge`
 
 5. (Optional) Transfer ownership of the chain to the UpgradeExecutor
 
-    `yarn run transferOwnership`
+    `yarn transfer-ownership`
 
 ## Structure of docker containers
 
-When starting your nodes with `docker compose up`, up to four containers will start:
+When starting your nodes with `yarn start-node`, up to four containers will start:
 
 - `batch-poster`: the sequencer/batch-poster for your chain
 - `staker`: the validator/staker for your chain
@@ -55,6 +55,18 @@ You can manage each individual container with the following commands:
 - `docker compose start <container>`: starts the specified container
 - `docker compose restart <container>`: restarts the specified container
 - `docker compose create <container>`: creates the specified container (in case it's been removed)
+
+## Enable Blockscout
+
+Setting the env variable `ENABLE_BLOCKSCOUT` to true, will start the blockscout containers when running `start-node`.
+
+Blockscout will be available at http://localhost/
+
+## Clean up data
+
+To clean up all data generated while running the chain, you can run the following command
+
+`yarn clean`
 
 ## Update the WASM module root of your node (WIP)
 

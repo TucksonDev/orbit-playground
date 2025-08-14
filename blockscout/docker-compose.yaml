@@ -1,0 +1,127 @@
+version: '3.9'
+
+# Source reference (for other services, and defaults)
+# https://docs.docker.com/compose/compose-file/
+
+# Arbitrum-specific env variables
+# https://docs.blockscout.com/setup/env-variables/backend-envs-chain-specific#arbitrum-management
+
+# Blockscout-clean (under profile "blockscout-clean")
+include:
+  - ./docker-compose-clean.yaml
+
+services:
+  ##################
+  # Backend services
+  ##################
+  redis_db:
+    profiles: [blockscout]
+    extends:
+      file: ./services/redis.yml
+      service: redis_db
+
+  db-init:
+    profiles: [blockscout]
+    extends:
+      file: ./services/db.yml
+      service: db-init
+
+  db:
+    profiles: [blockscout]
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    extends:
+      file: ./services/db.yml
+      service: db
+
+  backend:
+    profiles: [blockscout]
+    depends_on:
+      - db
+      - redis_db
+    extends:
+      file: ./services/backend.yml
+      service: backend
+    links:
+      - db:database
+    environment:
+        CHAIN_TYPE: "arbitrum"
+        ETHEREUM_JSONRPC_HTTP_URL: http://rpc:${NITRO_PORT}/
+        ETHEREUM_JSONRPC_TRACE_URL: http://rpc:${NITRO_PORT}/
+        INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER: "true"
+
+
+  ################
+  # Frontend services
+  ################
+  frontend:
+    profiles: [blockscout]
+    depends_on:
+      - backend
+    extends:
+      file: ./services/frontend.yml
+      service: frontend
+    environment:
+      NEXT_PUBLIC_NETWORK_NAME: "${ORBIT_CHAIN_NAME}"
+      NEXT_PUBLIC_NETWORK_SHORT_NAME: "${ORBIT_CHAIN_NAME}"
+      NEXT_PUBLIC_AD_BANNER_PROVIDER: "none"
+      NEXT_PUBLIC_NETWORK_RPC_URL: http://rpc:${NITRO_PORT}/
+
+
+  ################
+  # Stats services
+  ################
+  stats-db-init:
+    profiles: [blockscout]
+    extends:
+      file: ./services/stats.yml
+      service: stats-db-init
+
+  stats-db:
+    profiles: [blockscout]
+    depends_on:
+      stats-db-init:
+        condition: service_completed_successfully
+    extends:
+      file: ./services/stats.yml
+      service: stats-db
+
+  stats:
+    profiles: [blockscout]
+    depends_on:
+      - stats-db
+      - backend
+    extends:
+      file: ./services/stats.yml
+      service: stats
+
+
+  ###############
+  # Proxy service
+  ###############
+  proxy:
+    profiles: [blockscout]
+    depends_on:
+      - backend
+      - frontend
+      - stats
+    extends:
+      file: ./services/nginx.yml
+      service: proxy
+
+
+  ###############
+  # Other services
+  ###############
+  visualizer:
+    profiles: [blockscout]
+    extends:
+      file: ./services/visualizer.yml
+      service: visualizer
+
+  sig-provider:
+    profiles: [blockscout]
+    extends:
+      file: ./services/sig-provider.yml
+      service: sig-provider

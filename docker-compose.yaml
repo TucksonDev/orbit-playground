@@ -1,4 +1,9 @@
 version: '3.9'
+
+# Blockscout (under profile "blockscout")
+include:
+  - blockscout/docker-compose.yaml
+
 services:
   batch-poster:
     image: "${NITRO_DOCKER_IMAGE_TAG}"

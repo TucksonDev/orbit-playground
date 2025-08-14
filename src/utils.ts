@@ -275,14 +275,9 @@ export const readTokenBridgeContractsFile = (): TokenBridgeContracts => {
 // Orbit chain information helpers
 //
 export const getOrbitChainInformation = () => {
-  if (
-    !process.env.NITRO_RPC_URL ||
-    !process.env.NITRO_PORT ||
-    !process.env.BLOCK_EXPLORER_URL ||
-    !process.env.BLOCK_EXPLORER_PORT
-  ) {
+  if (!process.env.NITRO_RPC_URL || !process.env.NITRO_PORT) {
     throw new Error(
-      `Can't get orbitChainConfig without NITRO_RPC_URL, NITRO_PORT, BLOCK_EXPLORER_URL and BLOCK_EXPLORER_PORT. Set these variables in the .env file.`,
+      `Can't get orbitChainConfig without NITRO_RPC_URL and NITRO_PORT. Set these variables in the .env file.`,
     );
   }
 
@@ -291,7 +286,7 @@ export const getOrbitChainInformation = () => {
   const orbitChainId = Number(orbitChainConfig['chain-id']);
 
   const orbitChainRpc = process.env.NITRO_RPC_URL + ':' + process.env.NITRO_PORT;
-  const blockExplorerUrl = process.env.BLOCK_EXPLORER_URL + ':' + process.env.BLOCK_EXPLORER_PORT;
+  const blockExplorerUrl = 'http://localhost';
 
   return defineChain({
     id: orbitChainId,

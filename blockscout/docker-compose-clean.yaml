@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  # Based on ./services/redis.yml
+  redis-db-clean:
+    profiles: [blockscout-clean]
+    image: 'redis:alpine'
+    volumes:
+      - ./data/redis-data:/data
+    entrypoint:
+      - sh
+      - -c
+      - |
+        rm -rf /data/* || true
+      
+  # Based on ./services/db.yml
+  db-clean:
+    profiles: [blockscout-clean]
+    image: postgres:17
+    volumes:
+      - ./data/blockscout-db-data:/var/lib/postgresql/data
+    entrypoint:
+      - sh
+      - -c
+      - |
+        rm -rf /var/lib/postgresql/data/* || true
+
+  # Based on ./services/backend.yml
+  backend-clean:
+    profiles: [blockscout-clean]
+    image: blockscout/${DOCKER_REPO:-blockscout-arbitrum}:${DOCKER_TAG:-latest}
+    volumes:
+      - ./data/logs/:/app/logs/
+      - ./data/dets/:/app/dets/
+    entrypoint:
+      - sh
+      - -c
+      - |
+        rm -rf /app/logs/* /app/dets/* || true
+
+  # Based on ./services/stats.yml
+  stats-db-clean:
+    profiles: [blockscout-clean]
+    image: postgres:17
+    volumes:
+      - ./data/stats-db-data:/var/lib/postgresql/data
+    entrypoint:
+      - sh
+      - -c
+      - |
+        rm -rf /var/lib/postgresql/data/* || true
