@@ -38,7 +38,7 @@
     "prettier": "^2.8.3"
   },
   "dependencies": {
-    "@arbitrum/orbit-sdk": "^0.23.5",
+    "@arbitrum/orbit-sdk": "^0.24.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
     "viem": "^1.21.4"

@@ -74,8 +74,6 @@ const main = async () => {
     arbitrum: {
       InitialChainOwner: chainOwner.address,
       DataAvailabilityCommittee: process.env.USE_ANYTRUST == 'true' ? true : false,
-      // Remove once the Orbit SDK default is updated
-      InitialArbOSVersion: 40,
     },
   });
 
@@ -88,10 +86,6 @@ const main = async () => {
     // Extra parametrization
     confirmPeriodBlocks: 20n, // Reduce confirm period blocks
     baseStake: parseEther('0.1'), // Reduce base stake for proving
-
-    // Remove once the Orbit SDK default is updated
-    // ref: https://github.com/OffchainLabs/nitro/releases/tag/consensus-v40
-    wasmModuleRoot: '0xdb698a2576298f25448bc092e52cf13b1e24141c997135d70f217d674bbeb69a',
   });
 
   console.log(`Chain configuration is:`);
