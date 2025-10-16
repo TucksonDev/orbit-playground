@@ -150,9 +150,8 @@ const main = async () => {
     const { request: fundStakeTokenTxRequest } = await parentChainPublicClient.simulateContract({
       account: parentChainWalletClient.account,
       address: stakeToken,
-      abi: parseAbi(['function depositTo(address) public payable']),
-      functionName: 'depositTo',
-      args: [validatorAddress],
+      abi: parseAbi(['function deposit() public payable']),
+      functionName: 'deposit',
       value: baseStakeWei,
     });
     const fundStakeTokenTxHash = await parentChainWalletClient.writeContract(
@@ -162,6 +161,27 @@ const main = async () => {
       `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
         parentChainInformation,
       )}/tx/${fundStakeTokenTxHash}`,
+    );
+    // NOTE: it looks like viem is not handling the nonce correctly when making calls this quickly.
+    // Adding a delay of 10 seconds solves this issue.
+    await delay(10 * 1000);
+
+    const { request: transferStakeTokenTxRequest } = await parentChainPublicClient.simulateContract(
+      {
+        account: parentChainWalletClient.account,
+        address: stakeToken,
+        abi: parseAbi(['function transfer(address,uint256) public payable']),
+        functionName: 'transfer',
+        args: [validatorAddress, baseStakeWei],
+      },
+    );
+    const transferStakeTokenTxHash = await parentChainWalletClient.writeContract(
+      transferStakeTokenTxRequest,
+    );
+    console.log(
+      `Done! Transaction hash on parent chain: ${getBlockExplorerUrl(
+        parentChainInformation,
+      )}/tx/${transferStakeTokenTxHash}`,
     );
     // NOTE: it looks like viem is not handling the nonce correctly when making calls this quickly.
     // Adding a delay of 10 seconds solves this issue.
