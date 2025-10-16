@@ -18,6 +18,15 @@ This repository contains everything that's needed to start playing with Orbit ch
 
 Make a copy of the `.env.example` file and call it `.env`. Then, make sure you set a private key for the Chain owner, Batch poster and Staker accounts. You can leave the rest of options with their default, or customize any of them.
 
+Additionally, if the parent chain is not supported in the Orbit SDK, set the following env variables:
+
+```shell
+ROLLUPCREATOR_FACTORY_ADDRESS=
+WETH_ADDRESS=
+# CHAIN_MAX_DATA_SIZE should be 104857 for L3s and 117964 for L2s
+CHAIN_MAX_DATA_SIZE=
+```
+
 ## Deploy an Orbit chain
 
 1. Deploy the contracts
@@ -67,6 +76,21 @@ Blockscout will be available at http://localhost/
 To clean up all data generated while running the chain, you can run the following command
 
 `yarn clean`
+
+## Deploy the RollupCreator factory
+
+Modify the following env variable:
+
+```shell
+# MAX_DATA_SIZE should be 104857 for L3s and 117964 for L2s
+MAX_DATA_SIZE=
+```
+
+Run the rollup creator deployer script with:
+
+```shell
+yarn deploy-rollup-creator
+```
 
 ## Update the WASM module root of your node (WIP)
 

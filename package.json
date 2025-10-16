@@ -15,7 +15,9 @@
     "update-wasm": "ts-node ./scripts/updateWasmModuleRoot.ts",
     "update-node-config": "ts-node ./scripts/updateNodeConfiguration.ts",
     "recover-funds-from-parent-chain": "ts-node ./scripts/recoverFundsFromParentChain.ts",
-    "clean": "./shell-scripts/clean.sh"
+    "clean": "./shell-scripts/clean.sh",
+    "build-nitro-contracts": "cd nitro-contracts && yarn install && yarn build:all && cp scripts/config.example.ts scripts/config.ts && cd ..",
+    "deploy-rollup-creator": "./shell-scripts/deploy-rollupcreator.sh"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +29,7 @@
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",
     "dotenv": "^17.2.1",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^8.32.0",
     "eslint-config-next": "^13.2.4",
     "eslint-config-prettier": "^8.6.0",

@@ -23,6 +23,7 @@ import {
   saveDasNodeConfigFile,
   chainIsAnytrust,
   splitConfigPerType,
+  isParentChainSupported,
 } from '../../src/utils';
 import 'dotenv/config';
 
@@ -48,6 +49,7 @@ const validator = privateKeyToAccount(validatorPrivateKey).address;
 
 // Set the parent chain and create a public client for it
 const parentChainInformation = getChainConfigFromChainId(Number(process.env.PARENT_CHAIN_ID));
+const parentChainIsSupported = isParentChainSupported(parentChainInformation.id);
 const parentChainRpc = process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation);
 const parentChainPublicClient = createPublicClient({
   chain: parentChainInformation,
@@ -86,6 +88,19 @@ const main = async () => {
     // Extra parametrization
     confirmPeriodBlocks: 20n, // Reduce confirm period blocks
     baseStake: parseEther('0.1'), // Reduce base stake for proving
+
+    // The following parameters are mandatory for non-supported parent chains
+    challengeGracePeriodBlocks: parentChainIsSupported ? undefined : 20n,
+    minimumAssertionPeriod: parentChainIsSupported ? undefined : 75n,
+    validatorAfkBlocks: parentChainIsSupported ? undefined : 201600n,
+    sequencerInboxMaxTimeVariation: parentChainIsSupported
+      ? undefined
+      : {
+          delayBlocks: 28800n,
+          delaySeconds: 345600n,
+          futureBlocks: 300n,
+          futureSeconds: 3600n,
+        },
   });
 
   console.log(`Chain configuration is:`);
@@ -106,6 +121,9 @@ const main = async () => {
       validators: [validator],
       nativeToken,
       deployFactoriesToL2: process.env.DEPLOY_FACTORIES_TO_L2 == 'true' ? true : false,
+
+      // The following parameters are mandatory for non-supported parent chains
+      maxDataSize: parentChainIsSupported ? undefined : BigInt(process.env.CHAIN_MAX_DATA_SIZE!),
     },
     account: chainOwner,
     parentChainPublicClient,
@@ -139,6 +157,10 @@ const main = async () => {
     parentChainBeaconRpcUrl: chainIsL1(parentChainInformation)
       ? process.env.PARENT_CHAIN_BEACON_RPC_URL
       : undefined,
+
+    // The following parameters are mandatory for non-supported parent chains
+    // Note: here we assume the parent chain is not an Arbitrum/Orbit chain
+    parentChainIsArbitrum: parentChainIsSupported ? undefined : false,
   };
   let baseNodeConfig = prepareNodeConfig(nodeConfigParameters);
 

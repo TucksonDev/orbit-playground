@@ -2,3 +2,8 @@
 	path = nitro
 	url = https://github.com/OffchainLabs/nitro/
 	branch = v3.6.8
+[submodule "nitro-contracts"]
+	path = nitro-contracts
+	url = https://github.com/OffchainLabs/nitro-contracts.git
+	branch = develop
+	fetchRecurseSubmodules = true

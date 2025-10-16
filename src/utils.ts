@@ -3,9 +3,10 @@ import { generatePrivateKey } from 'viem/accounts';
 import { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia } from 'viem/chains';
 import { DasNodeConfig, NodeType, TokenBridgeContracts } from './types';
 import { readFileSync, writeFileSync } from 'fs';
-import { CoreContracts, NodeConfig } from '@arbitrum/orbit-sdk';
+import { CoreContracts, NodeConfig, registerCustomParentChain } from '@arbitrum/orbit-sdk';
 import * as readline from 'readline';
 import 'dotenv/config';
+import { getCustomParentChains } from '@arbitrum/orbit-sdk/chains';
 
 const supportedChains = { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia };
 
@@ -67,6 +68,18 @@ export const withFallbackPrivateKey = (privateKey: string | undefined): `0x${str
   return sanitizePrivateKey(privateKey);
 };
 
+export const isParentChainSupported = (chainId: number): boolean => {
+  for (const chain of Object.values(supportedChains)) {
+    if ('id' in chain) {
+      if (chain.id === chainId) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
 export const getChainConfigFromChainId = (chainId: number) => {
   for (const chain of Object.values(supportedChains)) {
     if ('id' in chain) {
@@ -76,7 +89,46 @@ export const getChainConfigFromChainId = (chainId: number) => {
     }
   }
 
-  throw new Error(`Chain id ${chainId} not found`);
+  // If the chain was not found within the supported chains, we register it in the Orbit SDK
+  if (
+    !process.env.PARENT_CHAIN_RPC_URL ||
+    !process.env.ROLLUPCREATOR_FACTORY_ADDRESS ||
+    !process.env.WETH_ADDRESS ||
+    !process.env.CHAIN_MAX_DATA_SIZE
+  ) {
+    throw new Error(
+      `Chain with id ${chainId} isn't supported out of the box. To register it, set the following env variables: PARENT_CHAIN_RPC_URL, ROLLUPCREATOR_FACTORY_ADDRESS, WETH_ADDRESS, CHAIN_MAX_DATA_SIZE.`,
+    );
+  }
+
+  const parentChainName = 'Parent chain';
+  const rollupCreatorFactoryAddress = process.env.ROLLUPCREATOR_FACTORY_ADDRESS as Address;
+  const wethAddress = process.env.WETH_ADDRESS as Address;
+  const tokenBridgeCreatorFactoryAddress = (process.env.TOKENBRIDGECREATOR_FACTORY_ADDRESS ||
+    '0x2000000000000000000000000000000000000000') as Address;
+  registerCustomParentChain({
+    id: chainId,
+    name: parentChainName,
+    network: parentChainName.replace(/\s+/g, '-').toLowerCase(),
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: {
+      public: {
+        http: [process.env.PARENT_CHAIN_RPC_URL],
+      },
+      default: { http: [process.env.PARENT_CHAIN_RPC_URL] },
+    },
+
+    contracts: {
+      rollupCreator: { address: rollupCreatorFactoryAddress },
+      tokenBridgeCreator: { address: tokenBridgeCreatorFactoryAddress },
+      weth: { address: wethAddress },
+    },
+  });
+  return getCustomParentChains().find((c) => c.id === chainId) as Chain;
 };
 
 export const getRpcUrl = (chain: Chain) => {
