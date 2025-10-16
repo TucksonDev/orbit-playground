@@ -79,6 +79,18 @@ To clean up all data generated while running the chain, you can run the followin
 
 ## Deploy the RollupCreator factory
 
+Make sure the submodules are up to date
+
+```shell
+git submodule update --init --force --recursive
+```
+
+Build the nitro-contracts submodule
+
+```shell
+yarn build-nitro-contracts
+```
+
 Modify the following env variable:
 
 ```shell
@@ -90,6 +102,33 @@ Run the rollup creator deployer script with:
 
 ```shell
 yarn deploy-rollup-creator
+```
+
+## Deploy the TokenBridgeCreator factory
+
+Make sure the submodules are up to date
+
+```shell
+git submodule update --init --force --recursive
+```
+
+Build the token-bridge-contracts submodule
+
+```shell
+yarn build-token-bridge-contracts
+```
+
+Modify the following env variable:
+
+```shell
+# BASECHAIN_WETH should be set to the WETH address of the parent chain
+BASECHAIN_WETH=
+```
+
+Run the rollup creator deployer script with:
+
+```shell
+yarn deploy-token-bridge-creator
 ```
 
 ## Update the WASM module root of your node (WIP)

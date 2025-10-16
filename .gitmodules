@@ -7,3 +7,8 @@
 	url = https://github.com/OffchainLabs/nitro-contracts.git
 	branch = develop
 	fetchRecurseSubmodules = true
+[submodule "token-bridge-contracts"]
+	path = token-bridge-contracts
+	url = https://github.com/OffchainLabs/token-bridge-contracts.git
+	branch = develop
+	fetchRecurseSubmodules = true
