@@ -1,11 +1,10 @@
+import { copyFileSync } from 'fs';
 import {
-  promptQuestion,
   readNodeConfigFile,
   getNodeConfigFileLocation,
   saveNodeConfigFile,
-  deepMerge,
-} from '../src/utils';
-import { copyFileSync } from 'fs';
+} from '../src/utils/node-configuration';
+import { promptQuestion, deepMerge } from '../src/utils/helpers';
 import 'dotenv/config';
 
 /////////////////

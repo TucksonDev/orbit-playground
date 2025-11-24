@@ -1,4 +1,15 @@
 [submodule "nitro"]
 	path = nitro
 	url = https://github.com/OffchainLabs/nitro/
-	branch = v3.6.8
+	branch = master
+	fetchRecurseSubmodules = true
+[submodule "nitro-contracts"]
+	path = nitro-contracts
+	url = https://github.com/OffchainLabs/nitro-contracts.git
+	branch = develop
+	fetchRecurseSubmodules = true
+[submodule "token-bridge-contracts"]
+	path = token-bridge-contracts
+	url = https://github.com/OffchainLabs/token-bridge-contracts.git
+	branch = develop
+	fetchRecurseSubmodules = true

@@ -1,14 +1,14 @@
-import 'dotenv/config';
+import { createPublicClient, createWalletClient, formatEther, http, parseEther } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 import {
   delay,
   getBlockExplorerUrl,
   getChainConfigFromChainId,
-  getOrbitChainConfiguration,
   promptQuestion,
   sanitizePrivateKey,
-} from '../src/utils';
-import { privateKeyToAccount } from 'viem/accounts';
-import { createPublicClient, createWalletClient, formatEther, http, parseEther } from 'viem';
+} from '../src/utils/helpers';
+import { getOrbitChainConfiguration } from '../src/utils/chain-info-helpers';
+import 'dotenv/config';
 
 // Check for required env variables
 if (
