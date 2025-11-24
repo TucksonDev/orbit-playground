@@ -1,16 +1,18 @@
 import { createPublicClient, http, zeroAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
-  chainIsAnytrust,
   getBlockExplorerUrl,
   getChainConfigFromChainId,
-  getChainNativeToken,
-  getOrbitChainConfiguration,
-  getOrbitChainInformation,
   getRpcUrl,
   sanitizePrivateKey,
   saveTokenBridgeContractsFile,
-} from '../../src/utils';
+} from '../../src/utils/helpers';
+import {
+  chainIsAnytrust,
+  getChainNativeToken,
+  getOrbitChainConfiguration,
+  getOrbitChainInformation,
+} from '../../src/utils/chain-info-helpers';
 import 'dotenv/config';
 import {
   createTokenBridgeEnoughCustomFeeTokenAllowance,
