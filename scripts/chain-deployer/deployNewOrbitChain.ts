@@ -4,16 +4,13 @@ import {
   createRollupPrepareDeploymentParamsConfig,
   prepareChainConfig,
   createRollup,
-  prepareNodeConfig,
-  PrepareNodeConfigParams,
   setValidKeysetPrepareTransactionRequest,
 } from '@arbitrum/orbit-sdk';
 import { generateChainId } from '@arbitrum/orbit-sdk/utils';
 import {
   prepareDasConfig,
+  buildNodeConfiguration,
   saveDasNodeConfigFile,
-  saveNodeConfigFile,
-  splitConfigPerType,
 } from '../../src/utils/node-configuration';
 import {
   getBlockExplorerUrl,
@@ -22,10 +19,9 @@ import {
   withFallbackPrivateKey,
   getRpcUrl,
   saveCoreContractsFile,
-  deepMerge,
   isParentChainSupported,
 } from '../../src/utils/helpers';
-import { chainIsAnytrust, chainIsL1 } from '../../src/utils/chain-info-helpers';
+import { chainIsAnytrust } from '../../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
 // Check for required env variables
@@ -143,106 +139,18 @@ const main = async () => {
   const coreContractsFilePath = saveCoreContractsFile(coreContracts);
   console.log(`Core contracts written to ${coreContractsFilePath}`);
 
-  //
-  // Preparing the node configuration
-  //
-  const nodeConfigParameters: PrepareNodeConfigParams = {
-    chainName: process.env.ORBIT_CHAIN_NAME || 'My Orbit chain',
+  // Build node configuration
+  const { batchPosterfilePath, stakerFilePath, rpcFilePath } = buildNodeConfiguration(
     chainConfig,
     coreContracts,
-    batchPosterPrivateKey: batchPosterPrivateKey,
-    validatorPrivateKey: validatorPrivateKey,
-    stakeToken: orbitChainConfig.stakeToken,
-    parentChainId: parentChainInformation.id,
-    parentChainRpcUrl: parentChainRpc,
-    parentChainBeaconRpcUrl: chainIsL1(parentChainInformation)
-      ? process.env.PARENT_CHAIN_BEACON_RPC_URL
-      : undefined,
-
-    // The following parameters are mandatory for non-supported parent chains
-    // Note: here we assume the parent chain is not an Arbitrum/Orbit chain
-    parentChainIsArbitrum: parentChainIsSupported ? undefined : false,
-  };
-  let baseNodeConfig = prepareNodeConfig(nodeConfigParameters);
-
-  if (process.env.DISABLE_L1_FINALITY === 'true') {
-    const updatedNodeConfig = {
-      node: {
-        'parent-chain-reader': {
-          'use-finality-data': false,
-        },
-        'delayed-sequencer': {
-          'require-full-finality': false,
-        },
-        'batch-poster': {
-          'data-poster': {
-            'wait-for-l1-finality': false,
-          },
-        },
-        'staker': {
-          'data-poster': {
-            'wait-for-l1-finality': false,
-          },
-        },
-        'bold': {
-          'rpc-block-number': 'latest',
-          'state-provider-config': {
-            'check-batch-finality': false,
-          },
-        },
-      },
-      execution: {
-        'parent-chain-reader': {
-          'use-finality-data': false,
-        },
-      },
-    };
-    baseNodeConfig = deepMerge(baseNodeConfig, updatedNodeConfig);
-  }
-
-  if (process.env.USE_FAST_L1_POSTING === 'true') {
-    const updatedNodeConfig = {
-      node: {
-        'batch-poster': {
-          'max-delay': '1m',
-        },
-        'staker': {
-          'make-assertion-interval': '1m',
-        },
-        'bold': {
-          'assertion-posting-interval': '1m',
-        },
-      },
-    };
-    baseNodeConfig = deepMerge(baseNodeConfig, updatedNodeConfig);
-  }
-
-  // Extra customizable options
-  if (process.env.NITRO_PORT != '') {
-    baseNodeConfig.http!.port = Number(process.env.NITRO_PORT);
-  }
-
-  //
-  // NOTE:
-  // The following configuration is added to the batch poster in the docker-compose file
-  //    - --node.feed.output.enable
-  //    - --node.feed.output.port=9642
-  //
-  // The following configuration is added to the staker and rpc in the docker-compose file
-  //    - --execution.forwarding-target 'http://batch-poster:8449'
-  //    - --node.feed.input.url ws://batch-poster:9642
-  //
-
-  // Split config into the different entities
-  const { batchPosterConfig, stakerConfig, rpcConfig } = splitConfigPerType(baseNodeConfig);
-
-  const batchPosterfilePath = saveNodeConfigFile('batch-poster', batchPosterConfig);
+    batchPosterPrivateKey,
+    validatorPrivateKey,
+    orbitChainConfig.stakeToken,
+    parentChainInformation,
+    parentChainRpc,
+  );
   console.log(`Batch poster config written to ${batchPosterfilePath}`);
-
-  const stakerFilePath = saveNodeConfigFile('staker', stakerConfig);
   console.log(`Staker config written to ${stakerFilePath}`);
-
-  const rpcFilePath = saveNodeConfigFile('rpc', rpcConfig);
   console.log(`RPC config written to ${rpcFilePath}`);
 
   // If we want to use AnyTrust, we need to:
