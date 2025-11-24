@@ -13,14 +13,16 @@ import {
   getBlockExplorerUrl,
   getChainConfigFromChainId,
   sanitizePrivateKey,
-  getOrbitChainInformation,
   delay,
-  getOrbitChainConfiguration,
   getRpcUrl,
-  getChainNativeToken,
+} from '../../src/utils/helpers';
+import {
   getChainBaseStake,
   getChainStakeToken,
-} from '../../src/utils';
+  getChainNativeToken,
+  getOrbitChainConfiguration,
+  getOrbitChainInformation,
+} from '../../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
 // Check for required env variables

@@ -10,21 +10,22 @@ import {
 } from '@arbitrum/orbit-sdk';
 import { generateChainId } from '@arbitrum/orbit-sdk/utils';
 import {
+  prepareDasConfig,
+  saveDasNodeConfigFile,
+  saveNodeConfigFile,
+  splitConfigPerType,
+} from '../../src/utils/node-configuration';
+import {
   getBlockExplorerUrl,
   getChainConfigFromChainId,
   sanitizePrivateKey,
   withFallbackPrivateKey,
   getRpcUrl,
-  saveNodeConfigFile,
-  chainIsL1,
   saveCoreContractsFile,
   deepMerge,
-  prepareDasConfig,
-  saveDasNodeConfigFile,
-  chainIsAnytrust,
-  splitConfigPerType,
   isParentChainSupported,
-} from '../../src/utils';
+} from '../../src/utils/helpers';
+import { chainIsAnytrust, chainIsL1 } from '../../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
 // Check for required env variables

@@ -10,9 +10,9 @@ import { privateKeyToAccount } from 'viem/accounts';
 import {
   getChainConfigFromChainId,
   sanitizePrivateKey,
-  getOrbitChainConfiguration,
   getBlockExplorerUrl,
-} from '../src/utils';
+} from '../src/utils/helpers';
+import { getOrbitChainConfiguration } from '../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
 // Check for required env variables

@@ -4,9 +4,9 @@ import { arbOwnerPublicActions } from '@arbitrum/orbit-sdk';
 import {
   getBlockExplorerUrl,
   sanitizePrivateKey,
-  getOrbitChainInformation,
   readTokenBridgeContractsFile,
-} from '../../src/utils';
+} from '../../src/utils/helpers';
+import { getOrbitChainInformation } from '../../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
 // Check for required env variables
