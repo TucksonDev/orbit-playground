@@ -18,15 +18,6 @@ This repository contains everything that's needed to start playing with Orbit ch
 
 Make a copy of the `.env.example` file and call it `.env`. Then, make sure you set a private key for the Chain owner, Batch poster and Staker accounts. You can leave the rest of options with their default, or customize any of them.
 
-Additionally, if the parent chain is not supported in the Orbit SDK, set the following env variables:
-
-```shell
-ROLLUPCREATOR_FACTORY_ADDRESS=
-WETH_ADDRESS=
-# CHAIN_MAX_DATA_SIZE should be 104857 for L3s and 117964 for L2s
-CHAIN_MAX_DATA_SIZE=
-```
-
 ## Deploy an Orbit chain
 
 1. Deploy the contracts
@@ -77,7 +68,11 @@ To clean up all data generated while running the chain, you can run the followin
 
 `yarn clean`
 
-## Deploy the RollupCreator factory
+## Using a custom parent chain
+
+If the parent chain is not supported in the Orbit SDK, you can still deploy the RollupCreator and the TokenBridgeCreator and create a chain using those.
+
+### Deploy the RollupCreator factory
 
 Make sure the submodules are up to date
 
@@ -104,7 +99,7 @@ Run the rollup creator deployer script with:
 yarn deploy-rollup-creator
 ```
 
-## Deploy the TokenBridgeCreator factory
+### Deploy the TokenBridgeCreator factory
 
 Make sure the submodules are up to date
 
@@ -130,6 +125,19 @@ Run the rollup creator deployer script with:
 ```shell
 yarn deploy-token-bridge-creator
 ```
+
+### Create a chain using the new factory contracts
+
+Set the following env variables:
+
+```shell
+ROLLUPCREATOR_FACTORY_ADDRESS=
+WETH_ADDRESS=
+# CHAIN_MAX_DATA_SIZE should be 104857 for L3s and 117964 for L2s
+CHAIN_MAX_DATA_SIZE=
+```
+
+And run the same process as described in [Deploy an Orbit chain](#deploy-an-orbit-chain).
 
 ## Building nitro
 
