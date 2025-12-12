@@ -7,7 +7,7 @@ import {
   promptQuestion,
   sanitizePrivateKey,
 } from '../src/utils/helpers';
-import { getOrbitChainConfiguration } from '../src/utils/chain-info-helpers';
+import { getChainConfiguration } from '../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
 // Check for required env variables
@@ -24,8 +24,8 @@ if (
 // Constants
 const MINIMUM_FUNDS_TO_TRANSFER = parseEther('0.01');
 
-// Get Orbit configuration
-const orbitChainConfig = getOrbitChainConfiguration();
+// Get Arbitrum chain configuration
+const arbitrumChainConfig = getChainConfiguration();
 
 // Load accounts
 const chainOwner = privateKeyToAccount(sanitizePrivateKey(process.env.CHAIN_OWNER_PRIVATE_KEY));
@@ -33,7 +33,7 @@ const batchPoster = privateKeyToAccount(sanitizePrivateKey(process.env.BATCH_POS
 const staker = privateKeyToAccount(sanitizePrivateKey(process.env.STAKER_PRIVATE_KEY));
 
 // Set the parent chain and create a wallet client for it
-const parentChainId = Number(orbitChainConfig['parent-chain-id']);
+const parentChainId = Number(arbitrumChainConfig['parent-chain-id']);
 const parentChainInformation = getChainConfigFromChainId(parentChainId);
 const parentChainWalletClient = createWalletClient({
   chain: parentChainInformation,
@@ -51,7 +51,7 @@ const main = async () => {
   console.log(
     'WARNING: This script will empty the default staker and batch poster wallets of your chain. This means that they will be unable to process their actions on the parent chain.',
   );
-  console.log(`Use only if you don't want to keep using this Orbit chain.`);
+  console.log(`Use only if you don't want to keep using this Arbitrum chain.`);
   const answer = await promptQuestion('Do you want to continue? y/N: ');
   if (answer.toLowerCase() != 'y') {
     console.log('Aborting...');

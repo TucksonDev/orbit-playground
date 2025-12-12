@@ -5,8 +5,8 @@ import {
   prepareChainConfig,
   createRollup,
   setValidKeysetPrepareTransactionRequest,
-} from '@arbitrum/orbit-sdk';
-import { generateChainId } from '@arbitrum/orbit-sdk/utils';
+} from '@arbitrum/chain-sdk';
+import { generateChainId } from '@arbitrum/chain-sdk/utils';
 import {
   prepareDasConfig,
   buildNodeConfiguration,
@@ -57,19 +57,19 @@ const parentChainPublicClient = createPublicClient({
 const chainOwner = privateKeyToAccount(sanitizePrivateKey(process.env.CHAIN_OWNER_PRIVATE_KEY));
 
 const main = async () => {
-  console.log('***********************');
-  console.log('* Orbit chain creator *');
-  console.log('***********************');
+  console.log('**************************');
+  console.log('* Arbitrum chain creator *');
+  console.log('**************************');
   console.log('');
 
   // Generate a random chain id
-  const orbitChainId = generateChainId();
+  const chainId = generateChainId();
 
   //
   // Create the chain config
   //
   const chainConfig = prepareChainConfig({
-    chainId: orbitChainId,
+    chainId: chainId,
     arbitrum: {
       InitialChainOwner: chainOwner.address,
       DataAvailabilityCommittee: process.env.USE_ANYTRUST == 'true' ? true : false,
@@ -77,9 +77,9 @@ const main = async () => {
   });
 
   // Prepare the transaction for deploying the core contracts
-  const orbitChainConfig = createRollupPrepareDeploymentParamsConfig(parentChainPublicClient, {
+  const arbitrumChainConfig = createRollupPrepareDeploymentParamsConfig(parentChainPublicClient, {
     chainConfig,
-    chainId: BigInt(orbitChainId),
+    chainId: BigInt(chainId),
     owner: chainOwner.address,
 
     // Extra parametrization
@@ -101,7 +101,7 @@ const main = async () => {
   });
 
   console.log(`Chain configuration is:`);
-  console.log(orbitChainConfig);
+  console.log(arbitrumChainConfig);
 
   // Native token check
   const nativeToken =
@@ -113,7 +113,7 @@ const main = async () => {
   //
   const transactionResult = await createRollup({
     params: {
-      config: orbitChainConfig,
+      config: arbitrumChainConfig,
       batchPosters: [batchPoster],
       validators: [validator],
       nativeToken,
@@ -127,7 +127,7 @@ const main = async () => {
   });
 
   console.log(
-    `Orbit chain was successfully deployed. Transaction hash: ${getBlockExplorerUrl(
+    `Arbitrum chain was successfully deployed. Transaction hash: ${getBlockExplorerUrl(
       parentChainInformation,
     )}/tx/${transactionResult.transactionReceipt.transactionHash}`,
   );
@@ -145,7 +145,7 @@ const main = async () => {
     coreContracts,
     batchPosterPrivateKey,
     validatorPrivateKey,
-    orbitChainConfig.stakeToken,
+    arbitrumChainConfig.stakeToken,
     parentChainInformation,
     parentChainRpc,
   );

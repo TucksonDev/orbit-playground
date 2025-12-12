@@ -10,8 +10,8 @@ import {
 import {
   chainIsAnytrust,
   getChainNativeToken,
-  getOrbitChainConfiguration,
-  getOrbitChainInformation,
+  getChainConfiguration,
+  getChainInformation,
 } from '../../src/utils/chain-info-helpers';
 import 'dotenv/config';
 import {
@@ -21,7 +21,7 @@ import {
   createTokenBridgePrepareSetWethGatewayTransactionRequest,
   createTokenBridgePrepareTransactionReceipt,
   createTokenBridgePrepareTransactionRequest,
-} from '@arbitrum/orbit-sdk';
+} from '@arbitrum/chain-sdk';
 
 // Check for required env variables
 if (!process.env.CHAIN_OWNER_PRIVATE_KEY) {
@@ -29,23 +29,23 @@ if (!process.env.CHAIN_OWNER_PRIVATE_KEY) {
 }
 
 // Load nodeConfig file
-const orbitChainConfig = getOrbitChainConfiguration();
+const arbitrumChainConfig = getChainConfiguration();
 
 // Load accounts
 const chainOwner = privateKeyToAccount(sanitizePrivateKey(process.env.CHAIN_OWNER_PRIVATE_KEY));
 
 // Set the parent chain and create a wallet client for it
-const parentChainId = Number(orbitChainConfig['parent-chain-id']);
+const parentChainId = Number(arbitrumChainConfig['parent-chain-id']);
 const parentChainInformation = getChainConfigFromChainId(parentChainId);
 const parentChainPublicClient = createPublicClient({
   chain: parentChainInformation,
   transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation)),
 });
 
-// Set the orbit chain client
-const orbitChainInformation = getOrbitChainInformation();
-const orbitChainPublicClient = createPublicClient({
-  chain: orbitChainInformation,
+// Set the Arbitrum chain client
+const chainInformation = getChainInformation();
+const arbitrumChainPublicClient = createPublicClient({
+  chain: chainInformation,
   transport: http(),
 });
 
@@ -89,11 +89,11 @@ const main = async () => {
 
   const txRequest = await createTokenBridgePrepareTransactionRequest({
     params: {
-      rollup: orbitChainConfig.rollup.rollup,
+      rollup: arbitrumChainConfig.rollup.rollup,
       rollupOwner: chainOwner.address,
     },
     parentChainPublicClient,
-    orbitChainPublicClient,
+    orbitChainPublicClient: arbitrumChainPublicClient,
     account: chainOwner.address,
     retryableGasOverrides: {
       maxSubmissionCostForFactory: { percentIncrease: 100n },
@@ -118,25 +118,25 @@ const main = async () => {
   );
 
   // wait for retryables to execute
-  console.log(`Waiting for retryable tickets to execute on the Orbit chain...`);
-  const orbitChainRetryableReceipts = await txReceipt.waitForRetryables({
-    orbitPublicClient: orbitChainPublicClient,
+  console.log(`Waiting for retryable tickets to execute on the Arbitrum chain...`);
+  const chainRetryableReceipts = await txReceipt.waitForRetryables({
+    orbitPublicClient: arbitrumChainPublicClient,
   });
   console.log(`Retryables executed`);
   console.log(
-    `Transaction hash for first retryable is ${orbitChainRetryableReceipts[0].transactionHash}`,
+    `Transaction hash for first retryable is ${chainRetryableReceipts[0].transactionHash}`,
   );
   console.log(
-    `Transaction hash for second retryable is ${orbitChainRetryableReceipts[1].transactionHash}`,
+    `Transaction hash for second retryable is ${chainRetryableReceipts[1].transactionHash}`,
   );
-  if (orbitChainRetryableReceipts[0].status !== 'success') {
+  if (chainRetryableReceipts[0].status !== 'success') {
     throw new Error(
-      `First retryable status is not success: ${orbitChainRetryableReceipts[0].status}. Aborting...`,
+      `First retryable status is not success: ${chainRetryableReceipts[0].status}. Aborting...`,
     );
   }
-  if (orbitChainRetryableReceipts[1].status !== 'success') {
+  if (chainRetryableReceipts[1].status !== 'success') {
     throw new Error(
-      `Second retryable status is not success: ${orbitChainRetryableReceipts[1].status}. Aborting...`,
+      `Second retryable status is not success: ${chainRetryableReceipts[1].status}. Aborting...`,
     );
   }
 
@@ -151,22 +151,22 @@ const main = async () => {
   console.log(`TokenBridge contracts written to ${tokenBridgeContractsFilePath}`);
 
   // verifying L2 contract existence
-  const orbitChainRouterBytecode = await orbitChainPublicClient.getBytecode({
+  const arbitrumChainRouterBytecode = await arbitrumChainPublicClient.getBytecode({
     address: tokenBridgeContracts.orbitChainContracts.router,
   });
 
-  if (!orbitChainRouterBytecode || orbitChainRouterBytecode == '0x') {
+  if (!arbitrumChainRouterBytecode || arbitrumChainRouterBytecode == '0x') {
     throw new Error(
-      `TokenBridge deployment seems to have failed since orbit chain contracts do not have code`,
+      `TokenBridge deployment seems to have failed since Arbitrum chain contracts do not have code`,
     );
   }
 
   if (!chainIsAnytrust()) {
     // set weth gateway
     const setWethGatewayTxRequest = await createTokenBridgePrepareSetWethGatewayTransactionRequest({
-      rollup: orbitChainConfig.rollup.rollup,
+      rollup: arbitrumChainConfig.rollup.rollup,
       parentChainPublicClient,
-      orbitChainPublicClient,
+      orbitChainPublicClient: arbitrumChainPublicClient,
       account: chainOwner.address,
       retryableGasOverrides: {
         gasLimit: {
@@ -192,17 +192,16 @@ const main = async () => {
     );
 
     // Wait for retryables to execute
-    const orbitChainSetWethGatewayRetryableReceipt =
-      await setWethGatewayTxReceipt.waitForRetryables({
-        orbitPublicClient: orbitChainPublicClient,
-      });
+    const chainSetWethGatewayRetryableReceipt = await setWethGatewayTxReceipt.waitForRetryables({
+      orbitPublicClient: arbitrumChainPublicClient,
+    });
     console.log(`Retryables executed`);
     console.log(
-      `Transaction hash for retryable is ${orbitChainSetWethGatewayRetryableReceipt[0].transactionHash}`,
+      `Transaction hash for retryable is ${chainSetWethGatewayRetryableReceipt[0].transactionHash}`,
     );
-    if (orbitChainSetWethGatewayRetryableReceipt[0].status !== 'success') {
+    if (chainSetWethGatewayRetryableReceipt[0].status !== 'success') {
       throw new Error(
-        `Retryable status is not success: ${orbitChainSetWethGatewayRetryableReceipt[0].status}. Aborting...`,
+        `Retryable status is not success: ${chainSetWethGatewayRetryableReceipt[0].status}. Aborting...`,
       );
     }
   }
