@@ -1,6 +1,6 @@
-# Orbit playground
+# Arbitrum chains playground
 
-This repository contains everything that's needed to start playing with Orbit chains: deployment of contracts, customizing and building your nitro node and starting up your chain.
+This repository contains everything that's needed to start playing with Arbitrum chains: deployment of contracts, customizing and building your nitro node and starting up your chain.
 
 ## Setup
 
@@ -18,7 +18,7 @@ This repository contains everything that's needed to start playing with Orbit ch
 
 Make a copy of the `.env.example` file and call it `.env`. Then, make sure you set a private key for the Chain owner, Batch poster and Staker accounts. You can leave the rest of options with their default, or customize any of them.
 
-## Deploy an Orbit chain
+## Deploy an Arbitrum chain
 
 1. Deploy the contracts
 
@@ -70,7 +70,7 @@ To clean up all data generated while running the chain, you can run the followin
 
 ## Using a custom parent chain
 
-If the parent chain is not supported in the Orbit SDK, you can still deploy the RollupCreator and the TokenBridgeCreator and create a chain using those.
+If the parent chain is not supported in the Arbitrum Chain SDK, you can still deploy the RollupCreator and the TokenBridgeCreator and create a chain using those.
 
 ### Deploy the RollupCreator factory
 
@@ -137,7 +137,7 @@ WETH_ADDRESS=
 CHAIN_MAX_DATA_SIZE=
 ```
 
-And run the same process as described in [Deploy an Orbit chain](#deploy-an-orbit-chain).
+And run the same process as described in [Deploy an Arbitrum chain](#deploy-an-arbitrum-chain).
 
 ## Building nitro
 
@@ -185,7 +185,7 @@ You might run into issues when switching the nitro submodule to a branch with si
 
 ## Update the WASM module root of your node (WIP)
 
-When you modify the State Transition Function (STF) of your node, you have to update the WASM module root on-chain. You can find more information about what this means in the [Arbitrum documentation portal](https://docs.arbitrum.io/launch-orbit-chain/how-tos/customize-stf).
+When you modify the State Transition Function (STF) of your node, you have to update the WASM module root on-chain. You can find more information about what this means in the [Arbitrum documentation portal](https://docs.arbitrum.io/launch-arbitrum-chain/customize-your-chain/customize-stf).
 
 Follow these steps to complete the process.
 

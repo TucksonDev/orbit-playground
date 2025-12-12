@@ -6,9 +6,9 @@
   "scripts": {
     "lint": "eslint .",
     "format": "prettier '{scripts,src}/**/*.{js,json,ts,yml}' --write && eslint --fix",
-    "deploy-chain": "ts-node ./scripts/chain-deployer/deployNewOrbitChain.ts",
+    "deploy-chain": "ts-node ./scripts/chain-deployer/deployNewChain.ts",
     "start-node": "./shell-scripts/start-nitro.sh",
-    "initialize-chain": "ts-node ./scripts/chain-deployer/initializeOrbitChain.ts",
+    "initialize-chain": "ts-node ./scripts/chain-deployer/initializeChain.ts",
     "deploy-token-bridge": "ts-node ./scripts/chain-deployer/deployTokenBridge.ts",
     "transfer-ownership": "ts-node ./scripts/chain-deployer/transferOwnership.ts",
     "build-nitro": "./shell-scripts/build-nitro.sh",
@@ -44,7 +44,7 @@
     "prettier": "^2.8.3"
   },
   "dependencies": {
-    "@arbitrum/orbit-sdk": "^0.24.0",
+    "@arbitrum/chain-sdk": "^0.24.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
     "viem": "^1.21.4"

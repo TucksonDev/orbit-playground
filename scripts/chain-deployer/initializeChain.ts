@@ -20,8 +20,8 @@ import {
   getChainBaseStake,
   getChainStakeToken,
   getChainNativeToken,
-  getOrbitChainConfiguration,
-  getOrbitChainInformation,
+  getChainConfiguration,
+  getChainInformation,
 } from '../../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
@@ -36,8 +36,8 @@ if (
   );
 }
 
-// Get Orbit configuration
-const orbitChainConfig = getOrbitChainConfiguration();
+// Get chain configuration
+const arbitrumChainConfig = getChainConfiguration();
 
 // Load accounts
 const chainOwner = privateKeyToAccount(sanitizePrivateKey(process.env.CHAIN_OWNER_PRIVATE_KEY));
@@ -49,7 +49,7 @@ const validatorAddress = privateKeyToAccount(
 ).address;
 
 // Set the parent chain and create a wallet client for it
-const parentChainId = Number(orbitChainConfig['parent-chain-id']);
+const parentChainId = Number(arbitrumChainConfig['parent-chain-id']);
 const parentChainInformation = getChainConfigFromChainId(parentChainId);
 const parentChainWalletClient = createWalletClient({
   account: chainOwner,
@@ -61,9 +61,9 @@ const parentChainPublicClient = createPublicClient({
   transport: http(process.env.PARENT_CHAIN_RPC_URL || getRpcUrl(parentChainInformation)),
 });
 
-const orbitChainInformation = getOrbitChainInformation();
-const orbitChainPublicClient = createPublicClient({
-  chain: orbitChainInformation,
+const chainInformation = getChainInformation();
+const arbitrumChainPublicClient = createPublicClient({
+  chain: chainInformation,
   transport: http(),
 });
 
@@ -71,9 +71,9 @@ const orbitChainPublicClient = createPublicClient({
 const fundingAmount = process.env.FUNDING_AMOUNT || '0.3';
 
 const main = async () => {
-  console.log('***************************');
-  console.log('* Orbit chain initializer *');
-  console.log('***************************');
+  console.log('******************************');
+  console.log('* Arbitrum chain initializer *');
+  console.log('******************************');
   console.log('');
 
   //
@@ -191,10 +191,10 @@ const main = async () => {
   }
 
   //
-  // Funding the deployer account in the Orbit chain
+  // Funding the deployer account in the Arbitrum chain
   //
-  console.log(`Fund deployer account on orbit chain with ${fundingAmount} ETH...`);
-  const startBalance = await orbitChainPublicClient.getBalance({
+  console.log(`Fund deployer account on Arbitrum chain with ${fundingAmount} ETH...`);
+  const startBalance = await arbitrumChainPublicClient.getBalance({
     address: chainOwner.address,
   });
   if (startBalance >= fundingAmountWei) {
@@ -213,7 +213,7 @@ const main = async () => {
         address: nativeToken,
         abi: parseAbi(['function approve(address,uint256) public payable']),
         functionName: 'approve',
-        args: [orbitChainConfig.rollup.inbox, maxUint256],
+        args: [arbitrumChainConfig.rollup.inbox, maxUint256],
       });
 
       const approvalTxHash = await parentChainWalletClient.writeContract(approvalRequest);
@@ -225,7 +225,7 @@ const main = async () => {
 
       const { request } = await parentChainPublicClient.simulateContract({
         account: chainOwner,
-        address: orbitChainConfig.rollup.inbox,
+        address: arbitrumChainConfig.rollup.inbox,
         abi: parseAbi(['function depositERC20(uint256) public payable']),
         functionName: 'depositERC20',
         args: [fundingAmountWei],
@@ -240,7 +240,7 @@ const main = async () => {
     } else {
       const { request } = await parentChainPublicClient.simulateContract({
         account: chainOwner,
-        address: orbitChainConfig.rollup.inbox,
+        address: arbitrumChainConfig.rollup.inbox,
         abi: parseAbi(['function depositEth() public payable']),
         functionName: 'depositEth',
         value: fundingAmountWei,
@@ -255,14 +255,16 @@ const main = async () => {
     }
 
     // Wait for balance to be updated
-    console.log(`Waiting for funds to arrive to the Orbit chain (it might take a few minutes)...`);
+    console.log(
+      `Waiting for funds to arrive to the Arbitrum chain (it might take a few minutes)...`,
+    );
     while (true) {
       // eslint-disable-next-line no-await-in-loop
-      const currentBalance = await orbitChainPublicClient.getBalance({
+      const currentBalance = await arbitrumChainPublicClient.getBalance({
         address: chainOwner.address,
       });
       if (currentBalance - startBalance >= fundingAmountWei) {
-        console.log(`Deployer account has been funded on the Orbit chain.`);
+        console.log(`Deployer account has been funded on the Arbitrum chain.`);
         break;
       }
 

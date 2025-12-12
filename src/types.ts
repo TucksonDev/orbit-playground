@@ -2,7 +2,7 @@ import { Address } from 'viem';
 
 export type NodeType = 'batch-poster' | 'staker' | 'rpc';
 
-export interface OrbitConfig {
+export interface ArbitrumChainConfig {
   'chainOwner': string;
   'rollup': string;
   'inbox': string;
@@ -25,7 +25,7 @@ export interface OrbitConfig {
   'nativeToken': string;
 }
 
-export interface OrbitChainInformation {
+export interface ArbitrumChainInformation {
   chainId: number;
   chainName: string;
   rpcUrl: string;
@@ -39,7 +39,7 @@ export interface OrbitChainInformation {
 
 /*
   Temporary type definitions
-  (This are likely to be exposed or added on the Orbit SDK in the future)
+  (This are likely to be exposed or added on the Arbitrum Chain SDK in the future)
 */
 type TokenBridgeParentChainContracts = {
   router: Address;

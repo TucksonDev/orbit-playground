@@ -12,7 +12,7 @@ import {
   sanitizePrivateKey,
   getBlockExplorerUrl,
 } from '../src/utils/helpers';
-import { getOrbitChainConfiguration } from '../src/utils/chain-info-helpers';
+import { getChainConfiguration } from '../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
 // Check for required env variables
@@ -20,14 +20,14 @@ if (!process.env.CHAIN_OWNER_PRIVATE_KEY) {
   throw new Error('The following environment variables must be present: CHAIN_OWNER_PRIVATE_KEY');
 }
 
-// Get Orbit configuration
-const orbitChainConfig = getOrbitChainConfiguration();
+// Get Arbitrum chain configuration
+const arbitrumChainConfig = getChainConfiguration();
 
 // Load accounts
 const chainOwner = privateKeyToAccount(sanitizePrivateKey(process.env.CHAIN_OWNER_PRIVATE_KEY));
 
 // Create a public and wallet client for the parent chain
-const parentChainId = Number(orbitChainConfig['parent-chain-id']);
+const parentChainId = Number(arbitrumChainConfig['parent-chain-id']);
 const parentChainInformation = getChainConfigFromChainId(parentChainId);
 const parentChainWalletClient = createWalletClient({
   account: chainOwner,
@@ -40,13 +40,13 @@ const parentChainPublicClient = createPublicClient({
 });
 
 // Contract constants
-const rollupAddress = orbitChainConfig.rollup.rollup;
-const inboxAddress = orbitChainConfig.rollup.inbox;
+const rollupAddress = arbitrumChainConfig.rollup.rollup;
+const inboxAddress = arbitrumChainConfig.rollup.inbox;
 
 const main = async (newWasmModuleRoot: `0x${string}`) => {
-  console.log('****************************');
-  console.log('* Orbit chain WASM updater *');
-  console.log('****************************');
+  console.log('*******************************');
+  console.log('* Arbitrum chain WASM updater *');
+  console.log('*******************************');
   console.log('');
 
   //
@@ -70,7 +70,7 @@ const main = async (newWasmModuleRoot: `0x${string}`) => {
 
   //
   // Finding the UpgradeExecutor through the ProxyAdmin
-  //  (This will probably be added to the Orbit SDK at some point)
+  //  (This will probably be added to the Arbitrum Chain SDK at some point)
   //
   console.log(`Getting the UpgradeExecutor contract address...`);
   const proxyAdminAddress = await parentChainPublicClient.readContract({

@@ -2,8 +2,8 @@ import { Address, Chain } from 'viem';
 import { generatePrivateKey } from 'viem/accounts';
 import { mainnet, sepolia, arbitrum, arbitrumNova, arbitrumSepolia } from 'viem/chains';
 import { readFileSync, writeFileSync } from 'fs';
-import { CoreContracts, registerCustomParentChain } from '@arbitrum/orbit-sdk';
-import { getCustomParentChains } from '@arbitrum/orbit-sdk/chains';
+import { CoreContracts, registerCustomParentChain } from '@arbitrum/chain-sdk';
+import { getCustomParentChains } from '@arbitrum/chain-sdk/chains';
 import { TokenBridgeContracts } from '../types';
 import * as readline from 'readline';
 import 'dotenv/config';
@@ -89,7 +89,7 @@ export const getChainConfigFromChainId = (chainId: number) => {
     }
   }
 
-  // If the chain was not found within the supported chains, we register it in the Orbit SDK
+  // If the chain was not found within the supported chains, we register it in the Arbitrum Chain SDK
   if (
     !process.env.PARENT_CHAIN_RPC_URL ||
     !process.env.ROLLUPCREATOR_FACTORY_ADDRESS ||
@@ -154,7 +154,7 @@ export const readCoreContractsFile = (): CoreContracts => {
   return JSON.parse(readFileSync(filePath, 'utf8'));
 };
 
-// TODO: once TokenBridgeContracts is exported in the Orbit SDK, change the type of the parameter received
+// TODO: once TokenBridgeContracts is exported in the Arbitrum Chain SDK, change the type of the parameter received
 export const saveTokenBridgeContractsFile = (
   tokenBridgeContracts: TokenBridgeContracts,
 ): string => {

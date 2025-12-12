@@ -6,7 +6,7 @@ import {
   NodeConfig,
   PrepareNodeConfigParams,
   prepareNodeConfig,
-} from '@arbitrum/orbit-sdk';
+} from '@arbitrum/chain-sdk';
 import { DasNodeConfig, NodeType } from '../types';
 import { chainIsL1 } from './chain-info-helpers';
 import { deepMerge, isParentChainSupported } from './helpers';
@@ -54,7 +54,7 @@ export const buildNodeConfiguration = (
   // Preparing the node configuration
   //
   const nodeConfigParameters: PrepareNodeConfigParams = {
-    chainName: process.env.ORBIT_CHAIN_NAME || 'My Orbit chain',
+    chainName: process.env.ARBITRUM_CHAIN_NAME || 'My Arbitrum chain',
     chainConfig,
     coreContracts,
     batchPosterPrivateKey,
@@ -67,7 +67,7 @@ export const buildNodeConfiguration = (
       : undefined,
 
     // The following parameters are mandatory for non-supported parent chains
-    // Note: here we assume the parent chain is not an Arbitrum/Orbit chain
+    // Note: here we assume the parent chain is not an Arbitrum chain
     parentChainIsArbitrum: isParentChainSupported(parentChainInformation.id) ? undefined : false,
   };
   let baseNodeConfig = prepareNodeConfig(nodeConfigParameters);

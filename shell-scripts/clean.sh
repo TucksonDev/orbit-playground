@@ -5,7 +5,7 @@ set -o allexport
 source .env
 set +o allexport
 
-# Clean Orbit chain files
+# Clean chain files
 find chainConfig -mindepth 1 ! -name '.gitignore' ! -name 'batch-poster' ! -name 'staker' ! -name 'rpc' ! -name 'das-server' ! -name 'keys' ! -name 'das_bls*' -delete
 find chainDasData -mindepth 1 ! -name '.gitignore' -delete
 
