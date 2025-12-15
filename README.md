@@ -42,12 +42,15 @@ Make a copy of the `.env.example` file and call it `.env`. Then, make sure you s
 
 ## Structure of docker containers
 
-When starting your nodes with `yarn start-node`, up to four containers will start:
+When starting your nodes with `yarn start-node` the following containers will start, depending on the mode used:
 
-- `batch-poster`: the sequencer/batch-poster for your chain
-- `staker`: the validator/staker for your chain
-- `rpc`: a regular RPC node for your chain
-- `das-server`: a Data Availability Server if you're running an AnyTrust chain
+- If the `$SPLIT_NODES` env variable is set to false, a single `nitro` container will start that runs a nitro node acting as the batch-poster, staker and regular rpc.
+- If the `$SPLIT_NODES` env variable is set to true, the following containers will start:
+    - `batch-poster`: the sequencer/batch-poster for your chain
+    - `staker`: the validator/staker for your chain
+    - `rpc`: a regular RPC node for your chain
+
+- Additionally, a `das-server` container will start if you're running an AnyTrust chain. This container will run a Data Availability Server. 
 
 You can manage each individual container with the following commands:
 
