@@ -11,6 +11,8 @@ import {
   prepareDasConfig,
   buildNodeConfiguration,
   saveDasNodeConfigFile,
+  saveNodeConfigFile,
+  splitConfigPerType,
 } from '../../src/utils/node-configuration';
 import {
   getBlockExplorerUrl,
@@ -140,7 +142,7 @@ const main = async () => {
   console.log(`Core contracts written to ${coreContractsFilePath}`);
 
   // Build node configuration
-  const { batchPosterfilePath, stakerFilePath, rpcFilePath } = buildNodeConfiguration(
+  const baseNodeConfig = buildNodeConfiguration(
     chainConfig,
     coreContracts,
     batchPosterPrivateKey,
@@ -149,9 +151,22 @@ const main = async () => {
     parentChainInformation,
     parentChainRpc,
   );
-  console.log(`Batch poster config written to ${batchPosterfilePath}`);
-  console.log(`Staker config written to ${stakerFilePath}`);
-  console.log(`RPC config written to ${rpcFilePath}`);
+
+  if (process.env.SPLIT_NODES !== 'true') {
+    // Save single node config file
+    const singleNodeConfigFilePath = saveNodeConfigFile('rpc', baseNodeConfig);
+    console.log(`Node config written to ${singleNodeConfigFilePath}`);
+    return;
+  } else {
+    // Split config into the different entities
+    const { batchPosterConfig, stakerConfig, rpcConfig } = splitConfigPerType(baseNodeConfig);
+    const batchPosterfilePath = saveNodeConfigFile('batch-poster', batchPosterConfig);
+    const stakerFilePath = saveNodeConfigFile('staker', stakerConfig);
+    const rpcFilePath = saveNodeConfigFile('rpc', rpcConfig);
+    console.log(`Batch poster config written to ${batchPosterfilePath}`);
+    console.log(`Staker config written to ${stakerFilePath}`);
+    console.log(`RPC config written to ${rpcFilePath}`);
+  }
 
   // If we want to use AnyTrust, we need to:
   //    1. set the right keyset in the SequencerInbox

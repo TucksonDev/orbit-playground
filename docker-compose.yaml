@@ -1,47 +1,25 @@
 version: '3.9'
 
-# Blockscout (under profile "blockscout")
+# Extra services:
+# - Blockscout (under profile "blockscout")
+# - Split nodes (under profile "split-nodes")
 include:
   - blockscout/docker-compose.yaml
+  - docker-compose-split-nodes.yaml
 
 services:
-  batch-poster:
+  nitro:
+    profiles: [single-node]
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     ports:
       - "127.0.0.1:8149:${NITRO_PORT}"
       - "127.0.0.1:9642:9642"
     volumes:
-      - "./chainConfig/batch-poster:/home/user/.arbitrum"
-    command:
-      - --conf.file=/home/user/.arbitrum/batch-poster-config.json
-      - --node.feed.output.enable
-      - --node.feed.output.port=9642
-
-  staker:
-    depends_on:
-      - batch-poster
-    image: "${NITRO_DOCKER_IMAGE_TAG}"
-    ports:
-      - "127.0.0.1:8249:${NITRO_PORT}"
-    volumes:
-      - "./chainConfig/staker:/home/user/.arbitrum"
-    command:
-      - --conf.file=/home/user/.arbitrum/staker-config.json
-      - --execution.forwarding-target=http://batch-poster:8449
-      - --node.feed.input.url=ws://batch-poster:9642
-
-  rpc:
-    depends_on:
-      - batch-poster
-    image: "${NITRO_DOCKER_IMAGE_TAG}"
-    ports:
-      - "127.0.0.1:${NITRO_PORT}:${NITRO_PORT}"
-    volumes:
       - "./chainConfig/rpc:/home/user/.arbitrum"
     command:
       - --conf.file=/home/user/.arbitrum/rpc-config.json
-      - --execution.forwarding-target=http://batch-poster:8449
-      - --node.feed.input.url=ws://batch-poster:9642
+      - --node.feed.output.enable
+      - --node.feed.output.port=9642
 
   das-server:
     image: "${NITRO_DOCKER_IMAGE_TAG}"

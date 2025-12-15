@@ -5,8 +5,17 @@ set -o allexport
 source .env
 set +o allexport
 
-if [ "$ENABLE_BLOCKSCOUT" = "true" ]; then
-    docker compose --profile blockscout up
+# Add single-node or split-nodes profile based on $SPLIT_NODES
+$PROFILES=""
+if [ "$SPLIT_NODES" = "true" ]; then
+    PROFILES="$PROFILES --profile split-nodes"
 else
-    docker compose up
+    PROFILES="$PROFILES --profile single-node"
 fi
+
+# Add blockscout profile if enabled
+if [ "$ENABLE_BLOCKSCOUT" = "true" ]; then
+    PROFILES="$PROFILES --profile blockscout"
+fi
+
+docker compose $PROFILES up
