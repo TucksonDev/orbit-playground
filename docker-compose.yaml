@@ -12,7 +12,7 @@ services:
     profiles: [single-node]
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     ports:
-      - "127.0.0.1:8149:${NITRO_PORT}"
+      - "127.0.0.1:${NITRO_PORT}:${NITRO_PORT}"
       - "127.0.0.1:9642:9642"
     volumes:
       - "./chainConfig/rpc:/home/user/.arbitrum"

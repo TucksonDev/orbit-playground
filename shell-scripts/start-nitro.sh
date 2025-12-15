@@ -6,7 +6,7 @@ source .env
 set +o allexport
 
 # Add single-node or split-nodes profile based on $SPLIT_NODES
-$PROFILES=""
+PROFILES=""
 if [ "$SPLIT_NODES" = "true" ]; then
     PROFILES="$PROFILES --profile split-nodes"
 else
