@@ -45,11 +45,7 @@ export const buildNodeConfiguration = (
   stakeToken: Address,
   parentChainInformation: Chain,
   parentChainRpc: string,
-): {
-  batchPosterfilePath: string;
-  stakerFilePath: string;
-  rpcFilePath: string;
-} => {
+): NodeConfig => {
   //
   // Preparing the node configuration
   //
@@ -160,18 +156,7 @@ export const buildNodeConfiguration = (
   //    - --node.feed.input.url ws://batch-poster:9642
   //
 
-  // Split config into the different entities
-  const { batchPosterConfig, stakerConfig, rpcConfig } = splitConfigPerType(baseNodeConfig);
-
-  const batchPosterfilePath = saveNodeConfigFile('batch-poster', batchPosterConfig);
-  const stakerFilePath = saveNodeConfigFile('staker', stakerConfig);
-  const rpcFilePath = saveNodeConfigFile('rpc', rpcConfig);
-
-  return {
-    batchPosterfilePath,
-    stakerFilePath,
-    rpcFilePath,
-  };
+  return baseNodeConfig;
 };
 
 export const saveNodeConfigFile = (nodeType: NodeType, nodeConfig: NodeConfig): string => {
