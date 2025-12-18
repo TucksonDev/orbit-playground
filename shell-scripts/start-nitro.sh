@@ -8,14 +8,36 @@ set +o allexport
 # Add single-node or split-nodes profile based on $SPLIT_NODES
 PROFILES=""
 if [ "$SPLIT_NODES" = "true" ]; then
-    PROFILES="$PROFILES --profile split-nodes"
+    PROFILES="$PROFILES split-nodes"
 else
-    PROFILES="$PROFILES --profile single-node"
+    PROFILES="$PROFILES single-node"
 fi
 
 # Add blockscout profile if enabled
 if [ "$ENABLE_BLOCKSCOUT" = "true" ]; then
-    PROFILES="$PROFILES --profile blockscout"
+    PROFILES="$PROFILES blockscout"
 fi
 
-docker compose $PROFILES up
+# Enable the selected profiles
+export COMPOSE_PROFILES="$PROFILES"
+
+# Obtain the list of services to be started
+mapfile -t SERVICES < <(docker compose config --services)
+echo "Services: ${SERVICES[*]}"
+
+# Create containers without starting them
+docker compose create "${SERVICES[@]}"
+
+# Connect containers to the testnet docker network if needed
+if [ -n "$DOCKER_NETWORK" ]; then
+    for svc in "${SERVICES[@]}"; do
+    cid=$(docker compose ps -a -q "$svc")
+    [ -z "$cid" ] && continue
+    docker network connect "$DOCKER_NETWORK" "$cid" 2>/dev/null || true
+    done
+fi
+
+# Start all services
+docker compose start "${SERVICES[@]}"
+
+echo "Nitro services started with profiles: $COMPOSE_PROFILES"

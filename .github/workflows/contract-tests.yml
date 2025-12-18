@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-e2e:
+    name: Test e2e
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          sudo apt install kurtosis-cli
+      
+      - name: Start Kurtosis engine
+        run: kurtosis engine start
+      
+      - name: Run L1 node
+        run: kurtosis run --enclave l1-network github.com/ethpandaops/ethereum-package --args-file ../resources/kurtosis-network-params.yaml
+
+      - name: Setup node/yarn
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
+
+      - name: Install packages
+        run: yarn
+      
+      - name: Build nitro-contracts
+        run: yarn build-nitro-contracts
+      
+      - name: Deploy RollupCreator
+        run: CREATE2_PROXY_DEPLOYMENT=true yarn deploy-rollup-creator

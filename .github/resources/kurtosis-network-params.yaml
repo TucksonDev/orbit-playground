@@ -1,0 +1,15 @@
+participants:
+  - el_type: geth
+    el_image: "ethereum/client-go:v1.16.7"
+    el_extra_params: [
+      "--state.scheme=hash",
+      "--gcmode=archive",
+      "--syncmode=full",
+    ]
+    cl_type: prysm
+    cl_image: "gcr.io/offchainlabs/prysm/beacon-chain:v7.1.0"
+    vc_type: prysm
+    vc_image: "gcr.io/offchainlabs/prysm/validator:v7.1.0"
+network_params:
+  network_id: "1337"
+  prefunded_accounts: '{"0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E": {"balance": "100ETH"}}'

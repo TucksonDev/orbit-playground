@@ -1,5 +1,3 @@
-version: '3.9'
-
 # Extra services:
 # - Blockscout (under profile "blockscout")
 # - Split nodes (under profile "split-nodes")
