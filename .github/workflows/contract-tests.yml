@@ -45,7 +45,15 @@ jobs:
         run: cp .env.example .env
 
       - name: Update submodules
-        run: git submodule update --init --force --recursive
+        run: |
+          git submodule update --init --force --recursive nitro-contracts
+          git submodule update --init --force --recursive token-bridge-contracts
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.3.6
+          cache: false
       
       - name: Build nitro-contracts
         run: yarn build-nitro-contracts
