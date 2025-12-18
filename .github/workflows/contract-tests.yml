@@ -23,7 +23,7 @@ jobs:
         run: kurtosis engine start
       
       - name: Run L1 node
-        run: kurtosis run --enclave l1-network github.com/ethpandaops/ethereum-package --args-file ../resources/kurtosis-network-params.yaml
+        run: kurtosis run --enclave l1-network github.com/ethpandaops/ethereum-package --args-file .github/resources/kurtosis-network-params.yaml
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
