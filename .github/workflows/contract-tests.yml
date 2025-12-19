@@ -60,8 +60,8 @@ jobs:
       
       - name: Deploy RollupCreator
         env:
-          CUSTOM_RPC_URL: "http://172.16.0.10:8545"
-          CUSTOM_PRIVKEY: "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
+          CUSTOM_RPC_URL: ${{ env.PARENT_CHAIN_RPC_URL }}
+          CUSTOM_PRIVKEY: ${{ env.CHAIN_OWNER_PRIVATE_KEY }}
         run: CREATE2_PROXY_DEPLOYMENT=true yarn deploy-rollup-creator
       
       - name: Deploy WETH
@@ -72,7 +72,14 @@ jobs:
       
       - name: Deploy TokenBridgeCreator
         env:
-          BASECHAIN_RPC: "http://172.16.0.10:8545"
-          BASECHAIN_DEPLOYER_KEY: "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
-          BASECHAIN_WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+          BASECHAIN_RPC: ${{ env.PARENT_CHAIN_RPC_URL }}
+          BASECHAIN_DEPLOYER_KEY: ${{ env.CHAIN_OWNER_PRIVATE_KEY }}
+          BASECHAIN_WETH: "0xD92773693917F0fF664f85c3cB698c33420947ff"
         run: yarn deploy-token-bridge-creator
+
+      - name: Create Rollup
+        env:
+          ROLLUPCREATOR_FACTORY_ADDRESS: "0x7D0ED5a90b744F5872261a7D5509A85b283E95c9"
+          WETH_ADDRESS: "0xD92773693917F0fF664f85c3cB698c33420947ff"
+          CHAIN_MAX_DATA_SIZE: ${{ env.MAX_DATA_SIZE }}
+        run: yarn deploy-chain
