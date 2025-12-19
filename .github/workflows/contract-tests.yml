@@ -82,4 +82,14 @@ jobs:
           ROLLUPCREATOR_FACTORY_ADDRESS: "0x7D0ED5a90b744F5872261a7D5509A85b283E95c9"
           WETH_ADDRESS: "0xD92773693917F0fF664f85c3cB698c33420947ff"
           CHAIN_MAX_DATA_SIZE: ${{ env.MAX_DATA_SIZE }}
+          BATCH_POSTER_PRIVATE_KEY: "0xcb5790da63720727af975f42c79f69918580209889225fa7128c92402a6d3a65"
+          STAKER_PRIVATE_KEY: "0x182fecf15bdf909556a0f617a63e05ab22f1493d25a9f1e27c228266c772a890"
         run: yarn deploy-chain
+
+      - name: Start nitro
+        env:
+          DOCKER_NETWORK: "kt-l1-network"
+        run: yarn start-nitro
+      
+      - name: Initialize chain
+        run: yarn initialize-chain
