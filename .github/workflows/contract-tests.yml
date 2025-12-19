@@ -63,3 +63,16 @@ jobs:
           CUSTOM_RPC_URL: "http://172.16.0.10:8545"
           CUSTOM_PRIVKEY: "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
         run: CREATE2_PROXY_DEPLOYMENT=true yarn deploy-rollup-creator
+      
+      - name: Deploy WETH
+        run: forge create --rpc-url $CUSTOM_RPC_URL --private-key $CUSTOM_PRIVKEY --broadcast ./.github/resources/contracts/WETH9.sol:WETH9
+      
+      - name: Build token-bridge-contracts
+        run: yarn build-token-bridge-contracts
+      
+      - name: Deploy TokenBridgeCreator
+        env:
+          BASECHAIN_RPC: "http://172.16.0.10:8545"
+          BASECHAIN_DEPLOYER_KEY: "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
+          BASECHAIN_WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        run: yarn deploy-token-bridge-creator
