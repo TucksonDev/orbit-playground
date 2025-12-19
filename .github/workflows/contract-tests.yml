@@ -65,7 +65,7 @@ jobs:
         run: CREATE2_PROXY_DEPLOYMENT=true yarn deploy-rollup-creator
       
       - name: Deploy WETH
-        run: forge create --rpc-url $CUSTOM_RPC_URL --private-key $CUSTOM_PRIVKEY --broadcast ./.github/resources/contracts/WETH9.sol:WETH9
+        run: forge create --rpc-url $PARENT_CHAIN_RPC_URL --private-key $CHAIN_OWNER_PRIVATE_KEY --broadcast ./.github/resources/contracts/WETH9.sol:WETH9
       
       - name: Build token-bridge-contracts
         run: yarn build-token-bridge-contracts
