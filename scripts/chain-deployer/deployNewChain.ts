@@ -27,9 +27,14 @@ import { chainIsAnytrust } from '../../src/utils/chain-info-helpers';
 import 'dotenv/config';
 
 // Check for required env variables
-if (!process.env.PARENT_CHAIN_ID || !process.env.CHAIN_OWNER_PRIVATE_KEY) {
+if (
+  !process.env.PARENT_CHAIN_ID ||
+  !process.env.CHAIN_OWNER_PRIVATE_KEY ||
+  !process.env.BATCH_POSTER_PRIVATE_KEY ||
+  !process.env.STAKER_PRIVATE_KEY
+) {
   throw new Error(
-    'The following environment variables must be present: PARENT_CHAIN_ID, CHAIN_OWNER_PRIVATE_KEY',
+    'The following environment variables must be present: PARENT_CHAIN_ID, CHAIN_OWNER_PRIVATE_KEY, BATCH_POSTER_PRIVATE_KEY, STAKER_PRIVATE_KEY',
   );
 }
 
