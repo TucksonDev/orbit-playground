@@ -16,6 +16,10 @@ jobs:
       BATCH_POSTER_PRIVATE_KEY: "0xcb5790da63720727af975f42c79f69918580209889225fa7128c92402a6d3a65"
       STAKER_PRIVATE_KEY: "0x182fecf15bdf909556a0f617a63e05ab22f1493d25a9f1e27c228266c772a890"
       MAX_DATA_SIZE: 117964
+      CHAIN_MAX_DATA_SIZE: 117964
+      ROLLUPCREATOR_FACTORY_ADDRESS: "0x7D0ED5a90b744F5872261a7D5509A85b283E95c9"
+      TOKENBRIDGECREATOR_FACTORY_ADDRESS: "0xBd7f7c83BdBABfD65a98c6D2AFc9261F3d2Eb03B"
+      WETH_ADDRESS: "0xD92773693917F0fF664f85c3cB698c33420947ff"
 
     steps:
       - name: Checkout repository
@@ -76,14 +80,10 @@ jobs:
         env:
           BASECHAIN_RPC: ${{ env.PARENT_CHAIN_RPC_URL }}
           BASECHAIN_DEPLOYER_KEY: ${{ env.CHAIN_OWNER_PRIVATE_KEY }}
-          BASECHAIN_WETH: "0xD92773693917F0fF664f85c3cB698c33420947ff"
+          BASECHAIN_WETH: ${{ env.WETH_ADDRESS }}
         run: yarn deploy-token-bridge-creator
 
       - name: Create Rollup
-        env:
-          ROLLUPCREATOR_FACTORY_ADDRESS: "0x7D0ED5a90b744F5872261a7D5509A85b283E95c9"
-          WETH_ADDRESS: "0xD92773693917F0fF664f85c3cB698c33420947ff"
-          CHAIN_MAX_DATA_SIZE: ${{ env.MAX_DATA_SIZE }}
         run: yarn deploy-chain
 
       - name: Start nitro
@@ -95,9 +95,6 @@ jobs:
         run: yarn initialize-chain
       
       - name: Deploy TokenBridge
-        env:
-          TOKENBRIDGECREATOR_FACTORY_ADDRESS: "0xBd7f7c83BdBABfD65a98c6D2AFc9261F3d2Eb03B"
-          WETH_ADDRESS: "0xD92773693917F0fF664f85c3cB698c33420947ff"
         run: yarn deploy-token-bridge
       
       - name: Transfer ownership
