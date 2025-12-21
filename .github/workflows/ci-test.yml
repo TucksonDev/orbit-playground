@@ -89,7 +89,7 @@ jobs:
       - name: Start nitro
         env:
           DOCKER_NETWORK: "kt-l1-network"
-        run: yarn start-nitro
+        run: yarn start-node
       
       - name: Initialize chain
         run: yarn initialize-chain
