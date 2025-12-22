@@ -1,5 +1,3 @@
-version: '3.9'
-
 # Configuration for split nodes
 # Activate with the env variable SPLIT_NODES=true
 

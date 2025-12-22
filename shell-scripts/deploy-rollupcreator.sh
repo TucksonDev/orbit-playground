@@ -1,8 +1,11 @@
 #!/bin/bash
 
 # Loading .env file
+# (This small hack preserves existing exported environment variables, usually set in CLI)
 set -o allexport
+curenv=$(declare -p -x)
 source .env
+eval "$curenv"
 set +o allexport
 
 # Check whether the required environment variables are set
