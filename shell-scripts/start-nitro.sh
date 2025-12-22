@@ -34,9 +34,11 @@ docker compose create "${SERVICES[@]}"
 # Connect containers to the testnet docker network if needed
 if [ -n "$DOCKER_NETWORK" ]; then
     for svc in "${SERVICES[@]}"; do
-    cid=$(docker compose ps -a -q "$svc")
-    [ -z "$cid" ] && continue
-    docker network connect "$DOCKER_NETWORK" "$cid" 2>/dev/null || true
+        echo "Connecting service $svc to network $DOCKER_NETWORK"
+        cid=$(docker compose ps -a -q "$svc")
+        [ -z "$cid" ] && continue
+        docker network connect "$DOCKER_NETWORK" "$cid" 2>/dev/null || true
+        echo "Service connected"
     done
 fi
 
