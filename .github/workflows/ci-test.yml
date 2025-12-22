@@ -91,6 +91,9 @@ jobs:
           DOCKER_NETWORK: "kt-l1-network"
         run: yarn start-node
       
+      - name: Check logs
+        run: docker compose logs nitro
+      
       - name: Initialize chain
         run: yarn initialize-chain
       
