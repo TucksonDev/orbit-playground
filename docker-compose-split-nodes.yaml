@@ -4,7 +4,6 @@
 services:
   batch-poster:
     profiles: [split-nodes]
-    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     ports:
       - "127.0.0.1:8149:${NITRO_PORT}"
@@ -20,7 +19,6 @@ services:
     profiles: [split-nodes]
     depends_on:
       - batch-poster
-    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     ports:
       - "127.0.0.1:8249:${NITRO_PORT}"
@@ -35,7 +33,6 @@ services:
     profiles: [split-nodes]
     depends_on:
       - batch-poster
-    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     ports:
       - "127.0.0.1:${NITRO_PORT}:${NITRO_PORT}"

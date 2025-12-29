@@ -85,6 +85,12 @@ jobs:
 
       - name: Create Rollup
         run: yarn deploy-chain
+      
+      - name: Set permissions
+        # TestChain is the default chain name in .env.example
+        run: |
+          mkdir -p /home/user/.arbitrum/TestChain
+          sudo chown -R 1000:1000 /home/user/.arbitrum/TestChain
 
       - name: Start nitro
         env:
