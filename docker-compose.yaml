@@ -8,6 +8,7 @@ include:
 services:
   nitro:
     profiles: [single-node]
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     image: "${NITRO_DOCKER_IMAGE_TAG}"
     ports:
       - "127.0.0.1:${NITRO_PORT}:${NITRO_PORT}"
@@ -21,6 +22,7 @@ services:
 
   das-server:
     image: "${NITRO_DOCKER_IMAGE_TAG}"
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     entrypoint: [ "/bin/bash", "-c", "/das-server.sh ${USE_ANYTRUST}" ]
     volumes:
       - "./chainConfig/das-server:/home/user/.arbitrum"

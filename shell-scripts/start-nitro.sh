@@ -28,6 +28,10 @@ export COMPOSE_PROFILES="$PROFILES"
 mapfile -t SERVICES < <(docker compose config --services)
 echo "Services: ${SERVICES[*]}"
 
+#Export the user and group ID to be used by the nitro service
+export LOCAL_UID=$(id -u)
+export LOCAL_GID=$(id -g)
+
 # Create containers without starting them
 docker compose create "${SERVICES[@]}"
 
