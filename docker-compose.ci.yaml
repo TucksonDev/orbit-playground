@@ -1,0 +1,18 @@
+services:
+  nitro:
+    # Replace the base volumes with:
+    volumes:
+      # Named volume for chain data (no host permissions issues)
+      - nitro_data:/home/user/.arbitrum
+
+      # Bind-mount the config into a different path, read-only
+      - ./chainConfig/rpc:/home/user/rpc-config:ro
+
+    # Override the command so it uses the new config path
+    command:
+      - --conf.file=/home/user/rpc-config/rpc-config.json
+      - --node.feed.output.enable
+      - --node.feed.output.port=9642
+
+volumes:
+  nitro_data:

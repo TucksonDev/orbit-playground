@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-e2e:
+    name: Test e2e
+    runs-on: ubuntu-latest
+    env:
+      PARENT_CHAIN_ID: 1337
+      PARENT_CHAIN_RPC_URL: "http://172.16.0.10:8545"
+      PARENT_CHAIN_BEACON_RPC_URL: "http://172.16.0.11:3500"
+      CHAIN_OWNER_PRIVATE_KEY: "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
+      BATCH_POSTER_PRIVATE_KEY: "0xcb5790da63720727af975f42c79f69918580209889225fa7128c92402a6d3a65"
+      STAKER_PRIVATE_KEY: "0x182fecf15bdf909556a0f617a63e05ab22f1493d25a9f1e27c228266c772a890"
+      MAX_DATA_SIZE: 117964
+      CHAIN_MAX_DATA_SIZE: 117964
+      ROLLUPCREATOR_FACTORY_ADDRESS: "0x7D0ED5a90b744F5872261a7D5509A85b283E95c9"
+      TOKENBRIDGECREATOR_FACTORY_ADDRESS: "0xBd7f7c83BdBABfD65a98c6D2AFc9261F3d2Eb03B"
+      WETH_ADDRESS: "0xD92773693917F0fF664f85c3cB698c33420947ff"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          sudo apt install kurtosis-cli
+      
+      - name: Start Kurtosis engine
+        run: kurtosis engine start
+      
+      - name: Run L1 node
+        run: kurtosis run --enclave l1-network github.com/ethpandaops/ethereum-package --args-file .github/resources/kurtosis-network-params.yaml
+
+      - name: Setup node/yarn
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
+
+      - name: Install packages
+        run: yarn
+      
+      - name: Create .env file
+        run: cp .env.example .env
+
+      - name: Update submodules
+        run: |
+          git submodule update --init --force --recursive nitro-contracts
+          git submodule update --init --force --recursive token-bridge-contracts
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.3.6
+          cache: false
+      
+      - name: Build nitro-contracts
+        run: yarn build-nitro-contracts
+      
+      - name: Deploy RollupCreator
+        env:
+          CUSTOM_RPC_URL: ${{ env.PARENT_CHAIN_RPC_URL }}
+          CUSTOM_PRIVKEY: ${{ env.CHAIN_OWNER_PRIVATE_KEY }}
+        run: CREATE2_PROXY_DEPLOYMENT=true yarn deploy-rollup-creator
+      
+      - name: Deploy WETH
+        run: forge create --rpc-url $PARENT_CHAIN_RPC_URL --private-key $CHAIN_OWNER_PRIVATE_KEY --broadcast ./.github/resources/WETH9.sol:WETH9
+      
+      - name: Build token-bridge-contracts
+        run: yarn build-token-bridge-contracts
+      
+      - name: Deploy TokenBridgeCreator
+        env:
+          BASECHAIN_RPC: ${{ env.PARENT_CHAIN_RPC_URL }}
+          BASECHAIN_DEPLOYER_KEY: ${{ env.CHAIN_OWNER_PRIVATE_KEY }}
+          BASECHAIN_WETH: ${{ env.WETH_ADDRESS }}
+        run: yarn deploy-token-bridge-creator
+
+      - name: Create Rollup
+        run: yarn deploy-chain
+
+      - name: Start nitro
+        env:
+          DOCKER_NETWORK: "kt-l1-network"
+        run: CI_RUN=true yarn start-node
+      
+      - name: Check logs
+        run: docker compose logs nitro
+      
+      - name: Initialize chain
+        run: yarn initialize-chain
+      
+      - name: Deploy TokenBridge
+        run: yarn deploy-token-bridge
+      
+      - name: Transfer ownership
+        run: yarn transfer-ownership

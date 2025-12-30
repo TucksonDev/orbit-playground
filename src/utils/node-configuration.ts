@@ -50,7 +50,7 @@ export const buildNodeConfiguration = (
   // Preparing the node configuration
   //
   const nodeConfigParameters: PrepareNodeConfigParams = {
-    chainName: process.env.ARBITRUM_CHAIN_NAME || 'My Arbitrum chain',
+    chainName: process.env.ARBITRUM_CHAIN_NAME || 'MyArbitrumChain',
     chainConfig,
     coreContracts,
     batchPosterPrivateKey,

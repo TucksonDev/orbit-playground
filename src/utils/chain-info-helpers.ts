@@ -46,7 +46,7 @@ export const getChainConfiguration = () => {
 };
 
 export const chainIsL1 = (chain: Chain) => {
-  return chain.id == 1 || chain.id == 11155111;
+  return chain.id == 1 || chain.id == 11155111 || chain.id == 1337;
 };
 
 export const chainIsAnytrust = (): boolean => {
